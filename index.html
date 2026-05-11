@@ -27,19 +27,21 @@
             top: 10px;
             left: 10px;
             pointer-events: none;
+            z-index: 10;
         }
         #quiz {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 20, 0, 0.95);
+            background: rgba(0, 20, 0, 0.97);
             border: 4px solid #0f0;
-            padding: 20px;
-            width: 400px;
+            padding: 25px;
+            width: 420px;
             display: none;
             flex-direction: column;
             gap: 15px;
+            z-index: 20;
         }
     </style>
 </head>
@@ -49,25 +51,32 @@
     <div id="ui">
         <div>生命: <span id="health">100</span></div>
         <div>分數: <span id="score">0</span></div>
-        <div>武器: <span id="weapon">電擊槍</span></div>
+        <div>武器: <span id="weapon">洛克砲</span></div>
     </div>
 
     <div id="quiz">
         <h2 id="question">問題</h2>
         <div id="options"></div>
-        <div id="feedback" style="margin-top:10px; font-weight:bold;"></div>
+        <div id="feedback" style="margin-top:10px; font-weight:bold; min-height:24px;"></div>
     </div>
 
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
+        // 圖片資源
+        const playerImg = new Image();
+        playerImg.src = "player.png";   // 請把第一張圖存成 player.png 放在同一資料夾
+        
+        const bulletImg = new Image();
+        bulletImg.src = "bullet.png";   // 請把第二張圖存成 bullet.png 放在同一資料夾
+        
         // 遊戲變數
         let player = {
             x: 80,
-            y: 280,
-            width: 32,
-            height: 48,
+            y: 260,
+            width: 48,
+            height: 64,
             vy: 0,
             jumping: false,
             crouching: false,
@@ -79,71 +88,39 @@
         let particles = [];
         let score = 0;
         let gameTime = 0;
+        let isPaused = false;           // 新增：暫停控制
         
-        // 簡單像素風格顏色 (洛克人藍)
-        const playerColor = '#00aaff';
-        
-        // 藥物敵人資料
         const drugTypes = [
-            { name: "海洛因", color: "#8B4513", hp: 3, speed: 1.5, reward: 20 },
-            { name: "冰毒", color: "#00ffcc", hp: 2, speed: 2.2, reward: 25 },
-            { name: "大麻", color: "#228B22", hp: 1, speed: 1.8, reward: 15 },
+            { name: "海洛因", color: "#8B4513", hp: 3, speed: 1.6, reward: 20 },
+            { name: "冰毒",   color: "#00ffcc", hp: 2, speed: 2.1, reward: 25 },
+            { name: "大麻",   color: "#228B22", hp: 1, speed: 1.7, reward: 15 },
             { name: "K他命", color: "#ff00ff", hp: 2, speed: 1.9, reward: 22 }
         ];
         
         let keys = {};
+        let lastSpawnTime = 0;
         
-        // 問題庫（藥物教育）
+        // 問題庫
         const quizQuestions = [
-            {
-                q: "下列哪一種物質最容易造成心血管損傷？",
-                options: ["大麻", "海洛因", "冰毒", "酒精"],
-                answer: 2
-            },
-            {
-                q: "長期使用K他命最可能損害哪個器官？",
-                options: ["肝臟", "膀胱", "心臟", "肺部"],
-                answer: 1
-            },
-            {
-                q: "海洛因屬於哪一類藥物？",
-                options: ["興奮劑", "抑制劑", "迷幻劑", "解離劑"],
-                answer: 1
-            }
+            { q: "下列哪一種物質最容易造成心血管損傷？", options: ["大麻", "海洛因", "冰毒", "酒精"], answer: 2 },
+            { q: "長期使用K他命最可能損害哪個器官？", options: ["肝臟", "膀胱", "心臟", "肺部"], answer: 1 },
+            { q: "海洛因屬於哪一類藥物？", options: ["興奮劑", "抑制劑", "迷幻劑", "解離劑"], answer: 1 },
+            { q: "以下哪種物質會讓人產生強烈幻覺？", options: ["冰毒", "LSD", "海洛因", "尼古丁"], answer: 1 }
         ];
         
         let currentQuiz = null;
         
-        function drawPixelCharacter(x, y, crouch = false) {
-            // 簡易洛克人風格像素角色
-            ctx.fillStyle = playerColor;
-            // 頭
-            ctx.fillRect(x+8, y+4, 16, 12);
-            // 身體
-            ctx.fillRect(x+6, y+16, 20, 18);
-            // 手臂
-            ctx.fillRect(x+2, y+18, 6, 10);
-            ctx.fillRect(x+24, y+18, 6, 10);
-            // 腿
-            if (crouch) {
-                ctx.fillRect(x+8, y+32, 8, 12);
-                ctx.fillRect(x+18, y+32, 8, 12);
-            } else {
-                ctx.fillRect(x+8, y+32, 6, 16);
-                ctx.fillRect(x+18, y+32, 6, 16);
-            }
-            // 眼睛
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(x+12, y+8, 4, 4);
-        }
-        
         function spawnEnemy() {
+            if (enemies.length >= 4) return; // 最多同時存在4個
+            
             const type = drugTypes[Math.floor(Math.random() * drugTypes.length)];
+            const spreadY = 180 + Math.random() * 120; // 更分散的垂直位置
+            
             enemies.push({
-                x: canvas.width + 50,
-                y: 220 + Math.random() * 100,
-                width: 36,
-                height: 48,
+                x: canvas.width + 30 + Math.random() * 60,
+                y: spreadY,
+                width: 42,
+                height: 52,
                 hp: type.hp,
                 speed: type.speed,
                 color: type.color,
@@ -154,99 +131,85 @@
         
         function shoot() {
             bullets.push({
-                x: player.x + 40,
-                y: player.crouching ? player.y + 35 : player.y + 20,
-                width: 12,
-                height: 6,
-                speed: 8
+                x: player.x + 45,
+                y: player.crouching ? player.y + 42 : player.y + 32,
+                width: 24,
+                height: 12,
+                speed: 9
             });
-            
-            // 射擊粒子
-            for (let i = 0; i < 6; i++) {
-                particles.push({
-                    x: player.x + 40,
-                    y: player.crouching ? player.y + 35 : player.y + 20,
-                    vx: 3 + Math.random() * 3,
-                    vy: (Math.random() - 0.5) * 4,
-                    life: 12
-                });
-            }
         }
         
         function showQuiz() {
+            isPaused = true;
             currentQuiz = quizQuestions[Math.floor(Math.random() * quizQuestions.length)];
-            const quizEl = document.getElementById('quiz');
-            document.getElementById('question').textContent = currentQuiz.q;
             
+            document.getElementById('question').textContent = currentQuiz.q;
             const optionsDiv = document.getElementById('options');
             optionsDiv.innerHTML = '';
             
             currentQuiz.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.textContent = opt;
-                btn.style.padding = '10px';
-                btn.style.margin = '5px';
+                btn.style.padding = '12px';
+                btn.style.margin = '6px 0';
                 btn.style.width = '100%';
+                btn.style.fontSize = '16px';
                 btn.onclick = () => checkAnswer(i);
                 optionsDiv.appendChild(btn);
             });
             
-            quizEl.style.display = 'flex';
+            document.getElementById('quiz').style.display = 'flex';
         }
         
         function checkAnswer(selected) {
             const feedback = document.getElementById('feedback');
             if (selected === currentQuiz.answer) {
                 feedback.style.color = '#0f0';
-                feedback.textContent = '正確！獲得強力武器「電漿砲」！';
+                feedback.textContent = '✓ 正確！獲得額外分數 +50';
                 score += 50;
-                // 升級武器 (這裡可擴展)
             } else {
-                feedback.style.color = '#f00';
-                feedback.textContent = '錯誤... 但還是學習到了！';
+                feedback.style.color = '#ff6666';
+                feedback.textContent = '✗ 錯誤，但已學習到知識！';
             }
             
             setTimeout(() => {
                 document.getElementById('quiz').style.display = 'none';
-                document.getElementById('feedback').textContent = '';
-            }, 1800);
+                feedback.textContent = '';
+                isPaused = false;
+            }, 1600);
         }
         
         function update() {
+            if (isPaused) return;
+            
             gameTime++;
             
-            // 玩家跳躍
-            if (keys['ArrowUp'] || keys[' ']) {
-                if (!player.jumping) {
-                    player.vy = -12;
-                    player.jumping = true;
-                }
+            // 玩家移動
+            if ((keys['ArrowUp'] || keys[' ']) && !player.jumping) {
+                player.vy = -13;
+                player.jumping = true;
             }
             
-            // 下蹲
             player.crouching = keys['ArrowDown'];
             
-            // 重力
-            player.vy += 0.6;
+            player.vy += 0.65;
             player.y += player.vy;
             
-            // 地面碰撞
-            if (player.y > 280) {
-                player.y = 280;
+            if (player.y > 260) {
+                player.y = 260;
                 player.vy = 0;
                 player.jumping = false;
             }
             
             // 射擊
-            if (keys['z'] || keys['Z'] || keys[' ']) {
-                if (gameTime % 8 === 0) shoot();
+            if ((keys['z'] || keys['Z'] || keys[' ']) && gameTime % 7 === 0) {
+                shoot();
             }
             
             // 更新子彈
             for (let i = bullets.length - 1; i >= 0; i--) {
-                const b = bullets[i];
-                b.x += b.speed;
-                if (b.x > canvas.width) bullets.splice(i, 1);
+                bullets[i].x += bullets[i].speed;
+                if (bullets[i].x > canvas.width) bullets.splice(i, 1);
             }
             
             // 更新敵人
@@ -254,41 +217,38 @@
                 const e = enemies[i];
                 e.x -= e.speed;
                 
-                // 與玩家碰撞
-                if (e.x < player.x + player.width && 
-                    e.x + e.width > player.x &&
-                    e.y < player.y + player.height && 
-                    e.y + e.height > player.y) {
-                    player.health -= 15;
+                // 碰撞判定
+                if (e.x < player.x + player.width - 10 && 
+                    e.x + e.width > player.x + 20 &&
+                    e.y < player.y + player.height - 10 && 
+                    e.y + e.height > player.y + 15) {
+                    player.health -= 18;
                     enemies.splice(i, 1);
                     continue;
                 }
                 
-                // 子彈碰撞
+                // 子彈擊中
                 for (let j = bullets.length - 1; j >= 0; j--) {
                     const b = bullets[j];
-                    if (b.x < e.x + e.width && 
-                        b.x + b.width > e.x &&
-                        b.y < e.y + e.height && 
-                        b.y + b.height > e.y) {
+                    if (b.x < e.x + e.width && b.x + b.width > e.x &&
+                        b.y < e.y + e.height && b.y + b.height > e.y) {
                         
                         e.hp--;
                         bullets.splice(j, 1);
                         
                         if (e.hp <= 0) {
                             score += e.reward;
-                            // 擊敗後有機率出題
-                            if (Math.random() < 0.4) showQuiz();
+                            if (Math.random() < 0.45) showQuiz();
                             enemies.splice(i, 1);
                         }
                         break;
                     }
                 }
                 
-                if (e.x < -50) enemies.splice(i, 1);
+                if (e.x < -60) enemies.splice(i, 1);
             }
             
-            // 粒子更新
+            // 粒子效果
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.x += p.vx;
@@ -297,62 +257,48 @@
                 if (p.life <= 0) particles.splice(i, 1);
             }
             
-            // 隨機生成敵人
-            if (gameTime % 45 === 0) spawnEnemy();
-            
-            // UI 更新
-            document.getElementById('health').textContent = Math.max(0, Math.floor(player.health));
-            document.getElementById('score').textContent = score;
-        }
-        
-        function drawBackground() {
-            // 簡單背景
-            ctx.fillStyle = '#112233';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 地面
-            ctx.fillStyle = '#334422';
-            ctx.fillRect(0, 330, canvas.width, 70);
-            
-            // 格線 (復古感)
-            ctx.strokeStyle = 'rgba(0, 255, 100, 0.1)';
-            for (let x = 0; x < canvas.width; x += 40) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
+            // 敵人生成 (分散一些)
+            if (gameTime - lastSpawnTime > 55 && enemies.length < 4) {
+                spawnEnemy();
+                lastSpawnTime = gameTime;
             }
         }
         
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBackground();
+            ctx.fillStyle = '#0a1a2f';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 地面
+            ctx.fillStyle = '#223311';
+            ctx.fillRect(0, 325, canvas.width, 75);
             
             // 畫敵人
             for (let e of enemies) {
                 ctx.fillStyle = e.color;
                 ctx.fillRect(e.x, e.y, e.width, e.height);
                 ctx.fillStyle = '#000';
-                ctx.font = '12px monospace';
-                ctx.fillText(e.name, e.x + 4, e.y + 20);
+                ctx.font = 'bold 14px monospace';
+                ctx.fillText(e.name, e.x + 6, e.y + 22);
             }
             
-            // 畫玩家
-            drawPixelCharacter(player.x, player.y, player.crouching);
+            // 畫玩家 (使用上傳的圖片)
+            if (playerImg.complete) {
+                ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+            } else {
+                // 載入中備用
+                ctx.fillStyle = '#00aaff';
+                ctx.fillRect(player.x, player.y, player.width, player.height);
+            }
             
-            // 畫子彈
-            ctx.fillStyle = '#ffff00';
+            // 畫炮彈
             for (let b of bullets) {
-                ctx.fillRect(b.x, b.y, b.width, b.height);
+                if (bulletImg.complete) {
+                    ctx.drawImage(bulletImg, b.x, b.y, b.width, b.height);
+                } else {
+                    ctx.fillStyle = '#ffdd00';
+                    ctx.fillRect(b.x, b.y, b.width, b.height);
+                }
             }
-            
-            // 畫粒子
-            for (let p of particles) {
-                ctx.globalAlpha = p.life / 12;
-                ctx.fillStyle = '#ff8800';
-                ctx.fillRect(p.x, p.y, 4, 4);
-            }
-            ctx.globalAlpha = 1;
         }
         
         function gameLoop() {
@@ -360,38 +306,33 @@
             draw();
             
             if (player.health <= 0) {
-                ctx.fillStyle = 'rgba(255,0,0,0.7)';
+                ctx.fillStyle = 'rgba(200,0,0,0.85)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#fff';
                 ctx.font = '30px monospace';
-                ctx.fillText('GAME OVER', 280, 200);
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width/2, 180);
                 return;
             }
             
             requestAnimationFrame(gameLoop);
         }
         
-        // 鍵盤控制
-        window.addEventListener('keydown', e => {
-            keys[e.key] = true;
-        });
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
         
-        window.addEventListener('keyup', e => {
-            keys[e.key] = false;
-        });
-        
-        // 開始遊戲
-        function startGame() {
+        window.onload = () => {
+            // 預載圖片
+            Promise.all([playerImg, bulletImg].map(img => 
+                new Promise(r => img.onload = r)
+            )).then(() => {
+                gameLoop();
+            });
+            
             // 初始敵人
             for (let i = 0; i < 3; i++) {
-                setTimeout(spawnEnemy, i * 600);
+                setTimeout(spawnEnemy, 400 * i);
             }
-            gameLoop();
-        }
-        
-        // 初始化
-        window.onload = () => {
-            startGame();
         };
     </script>
 </body>
