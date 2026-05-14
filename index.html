@@ -182,4 +182,49 @@ function gameLoop() {
     // 體力自然消耗 + 均衡懲罰
     if (frame % 50 === 0) {
         energy -= (0.6 + currentScene * 0.3);
-        if (balance < 55)
+        if (balance < 55) energy -= 1.2;
+    }
+
+    if (energy <= 15 || balance <= 15) {
+        gameOver();
+        return;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ==================== 遊戲結束 ====================
+function gameOver() {
+    gameRunning = false;
+    let comment = balance >= 80 ? "🎉 你的飲食習慣非常均衡，值得作為榜樣！" :
+                  balance >= 60 ? "👍 還不錯！建議再加強蔬菜與優質蛋白質。" :
+                  "⚠️ 長期這樣吃容易累積慢性病風險，該調整飲食了。";
+
+    document.getElementById('finalScore').innerHTML = `最終距離：${distance} 公尺 | 總分：${score}`;
+    document.getElementById('nutritionReport').innerHTML = `
+        <p><strong>均衡指數：${Math.floor(balance)}%　${comment}</strong></p>
+        <p style="font-size:15px; line-height:1.6; margin-top:20px;">
+            💡 衛教重點：<br>
+            • 每日遵循「我的餐盤」：½蔬果、¼全穀、¼優質蛋白<br>
+            • 減少含糖飲料與加工食品，可大幅降低三高風險
+        </p>
+    `;
+    document.getElementById('gameOver').style.display = 'block';
+}
+
+function restart() {
+    location.reload();
+}
+
+// 啟動遊戲
+gameLoop();
+</script>
+
+<p style="margin-top:20px; color:#94a3b8; font-size:15px;">
+    操作方式：<br>
+    ← → 方向鍵（或 A / D）切換跑道　｜　空白鍵 跳躍躲障礙<br>
+    收集健康食物，避開垃圾食物，維持均衡與體力跑得更遠！
+</p>
+
+</body>
+</html>
