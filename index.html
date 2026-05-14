@@ -3,337 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>洛克藥戰 - 藥物教育射擊遊戲</title>
+    <title>清醒之門｜藥物教育逃脫遊戲</title>
     <style>
         body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background: linear-gradient(#1a0033, #330033);
+            color: #ffccff;
             margin: 0;
             padding: 0;
-            background: #000;
-            font-family: 'Courier New', monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
             overflow: hidden;
-            color: #0f0;
+            text-align: center;
         }
-        canvas {
-            image-rendering: pixelated;
-            border: 4px solid #0f0;
-            box-shadow: 0 0 20px #0f0;
-        }
-        #ui {
+        .room {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            pointer-events: none;
-            z-index: 10;
-        }
-        #quiz {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 20, 0, 0.97);
-            border: 4px solid #0f0;
-            padding: 25px;
-            width: 420px;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-size: cover;
+            background-position: center;
             display: none;
             flex-direction: column;
-            gap: 15px;
-            z-index: 20;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .active { display: flex !important; }
+        
+        h1 { margin: 10px; text-shadow: 0 0 10px #ff00ff; }
+        .story-text {
+            max-width: 700px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 15px auto;
+            line-height: 1.6;
+        }
+        button {
+            background: #660066;
+            color: #ffccff;
+            border: 2px solid #ff00ff;
+            padding: 12px 25px;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        button:hover { background: #990099; transform: scale(1.05); }
+        
+        .puzzle {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 600px;
+            margin: 15px;
+        }
+        .inventory {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .clue {
+            cursor: pointer;
+            background: #330033;
+            padding: 8px 15px;
+            margin: 5px;
+            display: inline-block;
+            border: 1px dashed #ff99ff;
         }
     </style>
 </head>
 <body>
-    <canvas id="game" width="800" height="400"></canvas>
-    
-    <div id="ui">
-        <div>生命: <span id="health">100</span></div>
-        <div>分數: <span id="score">0</span></div>
-        <div>武器: <span id="weapon">洛克砲</span></div>
+
+    <!-- 房間 1：開場 -->
+    <div id="room1" class="room active" style="background-image: url('https://picsum.photos/id/1015/1920/1080');">
+        <h1>清醒之門</h1>
+        <div class="story-text">
+            <p>你是一位高二學生，週末去參加朋友的派對。有人把不明藥物偷偷加進你的飲料……</p>
+            <p>醒來後，你發現自己被困在一個充滿幻覺的「迷幻房間」裡。</p>
+            <p>這裡是藥物對大腦製造的幻境。只有正確解開所有關於藥物的謎題，了解其前因後果，你才能找到「清醒之門」逃出去。</p>
+        </div>
+        <button onclick="nextRoom(2)">開始逃脫</button>
     </div>
 
-    <div id="quiz">
-        <h2 id="question">問題</h2>
-        <div id="options"></div>
-        <div id="feedback" style="margin-top:10px; font-weight:bold; min-height:24px;"></div>
+    <!-- 房間 2：藥物辨識 -->
+    <div id="room2" class="room" style="background-image: url('https://picsum.photos/id/201/1920/1080');">
+        <h1>第一關：迷幻藥瓶</h1>
+        <div class="story-text">
+            <p>桌上散落許多藥瓶。你必須把藥物正確分類，才能打開下一個抽屜。</p>
+        </div>
+        <div class="puzzle">
+            <p><strong>請將以下拖曳到正確分類（點擊後選擇）</strong></p>
+            <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin:20px 0;">
+                <div class="clue" onclick="selectDrug(this)">K他命</div>
+                <div class="clue" onclick="selectDrug(this)">止痛藥</div>
+                <div class="clue" onclick="selectDrug(this)">搖頭丸</div>
+                <div class="clue" onclick="selectDrug(this)">感冒藥</div>
+            </div>
+            <button onclick="checkRoom2()">確認分類</button>
+            <p id="room2-feedback"></p>
+        </div>
+        <button onclick="nextRoom(3)">繼續（正確後解鎖）</button>
+    </div>
+
+    <!-- 房間 3：後果時間軸 -->
+    <div id="room3" class="room" style="background-image: url('https://picsum.photos/id/870/1920/1080');">
+        <h1>第二關：後果時間軸</h1>
+        <div class="story-text">
+            <p>牆上出現時間軸。你必須把「使用某物質」後的後果按時間順序排好，才能開啟下一道門。</p>
+        </div>
+        <div class="puzzle">
+            <p>選擇物質：<select id="substance">
+                <option value="ketamine">K他命</option>
+                <option value="mdma">搖頭丸</option>
+            </select></p>
+            <div style="margin:20px 0;">
+                <button onclick="sortConsequence()">排列後果</button>
+            </div>
+            <p id="timeline"></p>
+            <p id="room3-feedback"></p>
+        </div>
+        <button onclick="nextRoom(4)">繼續</button>
+    </div>
+
+    <!-- 房間 4：拒絕技巧 -->
+    <div id="room4" class="room" style="background-image: url('https://picsum.photos/id/133/1920/1080');">
+        <h1>第三關：拒絕之鎖</h1>
+        <div class="story-text">
+            <p>朋友在門口邀約你：「來嘛，就試一次不會怎樣！」<br>你必須選擇正確的拒絕方式，才能打開最後的清醒之門。</p>
+        </div>
+        <div class="puzzle">
+            <p><strong>選擇最佳回應：</strong></p>
+            <button onclick="chooseResponse(1)">「好啊，下次再說」</button>
+            <button onclick="chooseResponse(2)">「不用了，我身體不舒服」</button>
+            <button onclick="chooseResponse(3)">「我已經了解這些藥物的危害，我選擇拒絕」</button>
+            <p id="room4-feedback"></p>
+        </div>
+    </div>
+
+    <!-- 結束畫面 -->
+    <div id="ending" class="room" style="background-image: url('https://picsum.photos/id/1016/1920/1080'); background-color:#001a00;">
+        <h1>✅ 你成功逃脫！</h1>
+        <div class="story-text">
+            <p>恭喜你！透過解謎，你了解了藥物的分類、立即與長期危害，以及如何堅定拒絕。</p>
+            <p><strong>真實故事結局：</strong><br>
+            藥物不會讓你「更開心」或「更放鬆」，它只會偷走你的健康、未來與清醒的自己。</p>
+            <p>現實中，遇到類似情況請勇敢說「不」，並尋求老師、父母或專業協助。</p>
+            <h2>學習重點回顧</h2>
+            <ul style="text-align:left; max-width:500px; margin:20px auto;">
+                <li>非法藥物會快速影響大腦神經傳導物質</li>
+                <li>即使「只試一次」也可能造成成癮與永久傷害</li>
+                <li>拒絕技巧 + 充足知識 = 最好的保護</li>
+            </ul>
+        </div>
+        <button onclick="restartGame()">再玩一次</button>
+    </div>
+
+    <div class="inventory">
+        <strong>背包：</strong> <span id="inventory">無</span>
     </div>
 
     <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        
-        // 圖片資源
-        const playerImg = new Image();
-        playerImg.src = "player.png";   // 請把第一張圖存成 player.png 放在同一資料夾
-        
-        const bulletImg = new Image();
-        bulletImg.src = "bullet.png";   // 請把第二張圖存成 bullet.png 放在同一資料夾
-        
-        // 遊戲變數
-        let player = {
-            x: 80,
-            y: 260,
-            width: 48,
-            height: 64,
-            vy: 0,
-            jumping: false,
-            crouching: false,
-            health: 100
-        };
-        
-        let bullets = [];
-        let enemies = [];
-        let particles = [];
-        let score = 0;
-        let gameTime = 0;
-        let isPaused = false;           // 新增：暫停控制
-        
-        const drugTypes = [
-            { name: "海洛因", color: "#8B4513", hp: 3, speed: 1.6, reward: 20 },
-            { name: "冰毒",   color: "#00ffcc", hp: 2, speed: 2.1, reward: 25 },
-            { name: "大麻",   color: "#228B22", hp: 1, speed: 1.7, reward: 15 },
-            { name: "K他命", color: "#ff00ff", hp: 2, speed: 1.9, reward: 22 }
-        ];
-        
-        let keys = {};
-        let lastSpawnTime = 0;
-        
-        // 問題庫
-        const quizQuestions = [
-            { q: "下列哪一種物質最容易造成心血管損傷？", options: ["大麻", "海洛因", "冰毒", "酒精"], answer: 2 },
-            { q: "長期使用K他命最可能損害哪個器官？", options: ["肝臟", "膀胱", "心臟", "肺部"], answer: 1 },
-            { q: "海洛因屬於哪一類藥物？", options: ["興奮劑", "抑制劑", "迷幻劑", "解離劑"], answer: 1 },
-            { q: "以下哪種物質會讓人產生強烈幻覺？", options: ["冰毒", "LSD", "海洛因", "尼古丁"], answer: 1 }
-        ];
-        
-        let currentQuiz = null;
-        
-        function spawnEnemy() {
-            if (enemies.length >= 4) return; // 最多同時存在4個
-            
-            const type = drugTypes[Math.floor(Math.random() * drugTypes.length)];
-            const spreadY = 180 + Math.random() * 120; // 更分散的垂直位置
-            
-            enemies.push({
-                x: canvas.width + 30 + Math.random() * 60,
-                y: spreadY,
-                width: 42,
-                height: 52,
-                hp: type.hp,
-                speed: type.speed,
-                color: type.color,
-                name: type.name,
-                reward: type.reward
-            });
-        }
-        
-        function shoot() {
-            bullets.push({
-                x: player.x + 45,
-                y: player.crouching ? player.y + 42 : player.y + 32,
-                width: 24,
-                height: 12,
-                speed: 9
-            });
-        }
-        
-        function showQuiz() {
-            isPaused = true;
-            currentQuiz = quizQuestions[Math.floor(Math.random() * quizQuestions.length)];
-            
-            document.getElementById('question').textContent = currentQuiz.q;
-            const optionsDiv = document.getElementById('options');
-            optionsDiv.innerHTML = '';
-            
-            currentQuiz.options.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.textContent = opt;
-                btn.style.padding = '12px';
-                btn.style.margin = '6px 0';
-                btn.style.width = '100%';
-                btn.style.fontSize = '16px';
-                btn.onclick = () => checkAnswer(i);
-                optionsDiv.appendChild(btn);
-            });
-            
-            document.getElementById('quiz').style.display = 'flex';
-        }
-        
-        function checkAnswer(selected) {
-            const feedback = document.getElementById('feedback');
-            if (selected === currentQuiz.answer) {
-                feedback.style.color = '#0f0';
-                feedback.textContent = '✓ 正確！獲得額外分數 +50';
-                score += 50;
-            } else {
-                feedback.style.color = '#ff6666';
-                feedback.textContent = '✗ 錯誤，但已學習到知識！';
-            }
-            
-            setTimeout(() => {
-                document.getElementById('quiz').style.display = 'none';
-                feedback.textContent = '';
-                isPaused = false;
-            }, 1600);
-        }
-        
-        function update() {
-            if (isPaused) return;
-            
-            gameTime++;
-            
-            // 玩家移動
-            if ((keys['ArrowUp'] || keys[' ']) && !player.jumping) {
-                player.vy = -13;
-                player.jumping = true;
-            }
-            
-            player.crouching = keys['ArrowDown'];
-            
-            player.vy += 0.65;
-            player.y += player.vy;
-            
-            if (player.y > 260) {
-                player.y = 260;
-                player.vy = 0;
-                player.jumping = false;
-            }
-            
-            // 射擊
-            if ((keys['z'] || keys['Z'] || keys[' ']) && gameTime % 7 === 0) {
-                shoot();
-            }
-            
-            // 更新子彈
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                bullets[i].x += bullets[i].speed;
-                if (bullets[i].x > canvas.width) bullets.splice(i, 1);
-            }
-            
-            // 更新敵人
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                const e = enemies[i];
-                e.x -= e.speed;
-                
-                // 碰撞判定
-                if (e.x < player.x + player.width - 10 && 
-                    e.x + e.width > player.x + 20 &&
-                    e.y < player.y + player.height - 10 && 
-                    e.y + e.height > player.y + 15) {
-                    player.health -= 18;
-                    enemies.splice(i, 1);
-                    continue;
-                }
-                
-                // 子彈擊中
-                for (let j = bullets.length - 1; j >= 0; j--) {
-                    const b = bullets[j];
-                    if (b.x < e.x + e.width && b.x + b.width > e.x &&
-                        b.y < e.y + e.height && b.y + b.height > e.y) {
-                        
-                        e.hp--;
-                        bullets.splice(j, 1);
-                        
-                        if (e.hp <= 0) {
-                            score += e.reward;
-                            if (Math.random() < 0.45) showQuiz();
-                            enemies.splice(i, 1);
-                        }
-                        break;
-                    }
-                }
-                
-                if (e.x < -60) enemies.splice(i, 1);
-            }
-            
-            // 粒子效果
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life--;
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-            
-            // 敵人生成 (分散一些)
-            if (gameTime - lastSpawnTime > 55 && enemies.length < 4) {
-                spawnEnemy();
-                lastSpawnTime = gameTime;
-            }
-        }
-        
-        function draw() {
-            ctx.fillStyle = '#0a1a2f';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 地面
-            ctx.fillStyle = '#223311';
-            ctx.fillRect(0, 325, canvas.width, 75);
-            
-            // 畫敵人
-            for (let e of enemies) {
-                ctx.fillStyle = e.color;
-                ctx.fillRect(e.x, e.y, e.width, e.height);
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 14px monospace';
-                ctx.fillText(e.name, e.x + 6, e.y + 22);
-            }
-            
-            // 畫玩家 (使用上傳的圖片)
-            if (playerImg.complete) {
-                ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
-            } else {
-                // 載入中備用
-                ctx.fillStyle = '#00aaff';
-                ctx.fillRect(player.x, player.y, player.width, player.height);
-            }
-            
-            // 畫炮彈
-            for (let b of bullets) {
-                if (bulletImg.complete) {
-                    ctx.drawImage(bulletImg, b.x, b.y, b.width, b.height);
-                } else {
-                    ctx.fillStyle = '#ffdd00';
-                    ctx.fillRect(b.x, b.y, b.width, b.height);
-                }
-            }
-        }
-        
-        function gameLoop() {
-            update();
-            draw();
-            
-            if (player.health <= 0) {
-                ctx.fillStyle = 'rgba(200,0,0,0.85)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#fff';
-                ctx.font = '30px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER', canvas.width/2, 180);
+        let currentRoom = 1;
+        let inventory = [];
+
+        function nextRoom(room) {
+            if (room === 3 && !checkRoom2Answer()) {
+                alert("請先正確完成第一關！");
                 return;
             }
-            
-            requestAnimationFrame(gameLoop);
+            document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
+            document.getElementById('room' + room).classList.add('active');
+            currentRoom = room;
         }
-        
-        window.addEventListener('keydown', e => keys[e.key] = true);
-        window.addEventListener('keyup', e => keys[e.key] = false);
-        
-        window.onload = () => {
-            // 預載圖片
-            Promise.all([playerImg, bulletImg].map(img => 
-                new Promise(r => img.onload = r)
-            )).then(() => {
-                gameLoop();
-            });
-            
-            // 初始敵人
-            for (let i = 0; i < 3; i++) {
-                setTimeout(spawnEnemy, 400 * i);
+
+        // 第一關 - 藥物分類
+        let selectedDrugs = {};
+        function selectDrug(el) {
+            const name = el.textContent;
+            const category = prompt(`"${name}" 應該分類到？\n1. 合法成藥\n2. 處方藥\n3. 非法藥物`, "3");
+            if (category) {
+                selectedDrugs[name] = category;
+                el.style.background = "#006600";
+                el.textContent = name + " ✓";
             }
-        };
+        }
+
+        function checkRoom2Answer() {
+            if (selectedDrugs["K他命"] === "3" && 
+                selectedDrugs["搖頭丸"] === "3" && 
+                selectedDrugs["止痛藥"] === "2" && 
+                selectedDrugs["感冒藥"] === "1") {
+                return true;
+            }
+            return false;
+        }
+
+        function checkRoom2() {
+            if (checkRoom2Answer()) {
+                document.getElementById('room2-feedback').innerHTML = 
+                    '<span style="color:#00ff00">✅ 正確！這些非法藥物會嚴重影響大腦與判斷力。</span>';
+                inventory.push("藥物分類卡");
+                document.getElementById('inventory').textContent = inventory.join(", ");
+            } else {
+                document.getElementById('room2-feedback').innerHTML = 
+                    '<span style="color:#ff6666">❌ 請再確認分類。非法藥物危害極大！</span>';
+            }
+        }
+
+        // 第二關 - 後果時間軸
+        function sortConsequence() {
+            const sub = document.getElementById('substance').value;
+            let msg = "";
+            if (sub === "ketamine") {
+                msg = "立即：幻覺、失去痛覺 → 幾小時後：記憶損傷、尿路問題 → 長期：嚴重成癮、認知功能下降、膀胱萎縮";
+            } else {
+                msg = "立即：興奮、感覺增強 → 幾小時後：情緒低落、失眠 → 長期：血清素耗竭、憂鬱、記憶力受損";
+            }
+            document.getElementById('timeline').innerHTML = `<strong>${msg}</strong>`;
+            document.getElementById('room3-feedback').innerHTML = 
+                '<span style="color:#00ff00">✅ 你了解了藥物的時間軸危害！</span>';
+            inventory.push("後果時間軸");
+            document.getElementById('inventory').textContent = inventory.join(", ");
+        }
+
+        // 第三關 - 拒絕技巧
+        function chooseResponse(choice) {
+            const feedback = document.getElementById('room4-feedback');
+            if (choice === 3) {
+                feedback.innerHTML = '<span style="color:#00ff00; font-size:20px">✅ 完美拒絕！你成功開啟清醒之門！</span>';
+                setTimeout(() => {
+                    document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
+                    document.getElementById('ending').classList.add('active');
+                }, 1500);
+            } else {
+                feedback.innerHTML = '<span style="color:#ffaa00">這個回答不夠堅定，容易被繼續說服。最佳方式是清楚表達自己的決定與原因。</span>';
+            }
+        }
+
+        function restartGame() {
+            location.reload();
+        }
+
+        // 初始提示
+        console.log("%c藥物教育逃脫遊戲已載入 - 請認真思考每個選擇", "color:#ff99ff; font-size:14px");
     </script>
 </body>
 </html>
