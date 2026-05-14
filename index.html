@@ -2,223 +2,184 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>營養衝線：均衡人生 - 成人衛教版</title>
+<title>營養衝線：均衡人生 - 成人背後視角版</title>
 <style>
     body { margin:0; font-family: 'Microsoft JhengHei', Arial; background: #0f172a; color: #fff; text-align:center; }
-    canvas { border: 3px solid #22d3ee; border-radius: 12px; background: linear-gradient(#0ea5e9, #22d3ee); }
-    #ui { position: absolute; top: 15px; left: 15px; font-size: 18px; }
-    #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px; border-radius: 15px; display: none; }
+    canvas { border: 3px solid #22d3ee; border-radius: 12px; background: #111; }
+    #ui { position: absolute; top: 15px; left: 15px; font-size: 18px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; }
+    #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15,23,42,0.95); padding: 30px; border-radius: 15px; width: 80%; max-width: 600px; display: none; }
 </style>
 </head>
 <body>
 
-<h1>🍎 營養衝線：均衡人生 🍎</h1>
+<h1>🏃‍♂️ 營養衝線：均衡人生 🏃‍♀️</h1>
 <div id="ui">
-    距離: <span id="distance">0</span>m　|　
+    距離: <span id="distance">0</span> 公尺　|　
     分數: <span id="score">0</span>　|　
     均衡指數: <span id="balance">100</span>%　|　
     體力: <span id="energy">100</span>
 </div>
 
-<canvas id="canvas" width="900" height="500"></canvas>
+<canvas id="canvas" width="800" height="600"></canvas>
 
 <div id="gameOver">
-    <h2>遊戲結束！</h2>
+    <h2>遊戲結束！你的均衡人生跑了多遠？</h2>
     <p id="finalScore"></p>
     <div id="nutritionReport"></div>
-    <button onclick="restart()">重新開始</button>
+    <button onclick="restart()" style="padding:12px 30px; font-size:18px; margin-top:15px;">重新挑戰</button>
 </div>
 
 <script>
-// ==================== 遊戲變數 ====================
+// ==================== 遊戲設定 ====================
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+
 let gameRunning = true;
 let distance = 0;
 let score = 0;
 let balance = 100;
 let energy = 100;
-let speed = 5;
+let speed = 6;
+let currentScene = 0;
+
+const lanes = [250, 400, 550]; // 三條跑道 X 座標
+let currentLane = 1; // 0,1,2
 
 // 玩家
-const player = {
-    x: 150,
-    y: 350,
-    width: 60,
-    height: 80,
-    vy: 0,
-    jumping: false
-};
+const player = { y: 380, height: 90, width: 60 };
 
-// 食物與障礙
+// 物品與障礙
 let items = [];
+let obstacles = [];
 
-// 食物資料庫（成人版更豐富）
-const foodDB = [
-    // 健康食物 (+分, +均衡)
-    {name:"綠葉菜", emoji:"🥬", type:"healthy", score:15, balance:8, energy:5},
-    {name:"糙米飯", emoji:"🍚", type:"healthy", score:12, balance:7, energy:8},
-    {name:"鮭魚", emoji:"🐟", type:"healthy", score:18, balance:9, energy:10},
-    {name:"堅果", emoji:"🥜", type:"healthy", score:14, balance:6, energy:12},
-    {name:"優格", emoji:"🥛", type:"healthy", score:13, balance:7, energy:6},
-    {name:"蘋果", emoji:"🍎", type:"healthy", score:10, balance:5, energy:4},
-    
-    // 不健康食物 (-分, -均衡, -體力)
-    {name:"珍奶", emoji:"🧋", type:"junk", score:-20, balance:-15, energy:-25},
-    {name:"炸雞", emoji:"🍟", type:"junk", score:-15, balance:-12, energy:-18},
-    {name:"可樂", emoji:"🥤", type:"junk", score:-18, balance:-20, energy:-30},
-    {name:"甜甜圈", emoji:"🍩", type:"junk", score:-12, balance:-10, energy:-15}
+// 場景定義
+const scenes = [
+    {name: "城市街道", bg: "#334155", ground: "#1e2937", speedBoost: 0},
+    {name: "超市通道", bg: "#7c3aed", ground: "#6d28d9", speedBoost: 1},
+    {name: "健康農場", bg: "#166534", ground: "#14532d", speedBoost: 2},
+    {name: "身體循環", bg: "#b91c1c", ground: "#991b1b", speedBoost: 3}
 ];
 
-let keys = {};
 let frame = 0;
+let keys = {};
 
-// ==================== 控制 ====================
-window.addEventListener('keydown', e => keys[e.key] = true);
-window.addEventListener('keyup', e => keys[e.key] = false);
+// ==================== 食物資料 ====================
+const foodDB = [
+    {emoji:"🥬", type:"healthy", score:15, balance:8, energy:5},
+    {emoji:"🍎", type:"healthy", score:12, balance:7, energy:6},
+    {emoji:"🐟", type:"healthy", score:20, balance:10, energy:12},
+    {emoji:"🥜", type:"healthy", score:14, balance:6, energy:10},
+    {emoji:"🧋", type:"junk", score:-25, balance:-18, energy:-30},
+    {emoji:"🍟", type:"junk", score:-18, balance:-15, energy:-22},
+    {emoji:"🍩", type:"junk", score:-15, balance:-12, energy:-18}
+];
 
-// 跳躍
-function jump() {
-    if (!player.jumping) {
-        player.vy = -18;
-        player.jumping = true;
-    }
-}
-
-// ==================== 主遊戲迴圈 ====================
-function gameLoop() {
-    if (!gameRunning) return;
-    
-    frame++;
-    distance += Math.floor(speed / 2);
-    
-    // 更新UI
-    document.getElementById('distance').textContent = distance;
-    document.getElementById('score').textContent = score;
-    document.getElementById('balance').textContent = balance;
-    document.getElementById('energy').textContent = Math.floor(energy);
-
-    // 背景
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 地面
-    ctx.fillStyle = '#166534';
-    ctx.fillRect(0, 420, canvas.width, 80);
-    
-    // 玩家物理
-    player.vy += 0.8; // 重力
-    player.y += player.vy;
-    
-    if (player.y >= 350) {
-        player.y = 350;
-        player.vy = 0;
-        player.jumping = false;
-    }
-    
-    // 畫玩家
-    ctx.font = '60px Arial';
-    ctx.fillText('🏃', player.x, player.y + 60);
-    
-    // 生成物品
-    if (frame % 35 === 0) {
-        const isJunk = Math.random() < 0.45;
-        items.push({
-            x: canvas.width + 50,
-            y: Math.random() * 220 + 180,
-            ...foodDB[Math.floor(Math.random() * foodDB.length)]
-        });
-    }
-    
-    // 更新與繪製物品
-    for (let i = items.length - 1; i >= 0; i--) {
-        let item = items[i];
-        item.x -= speed;
-        
-        ctx.font = '45px Arial';
-        ctx.fillText(item.emoji, item.x, item.y);
-        
-        // 碰撞檢測
-        if (
-            item.x < player.x + player.width - 10 &&
-            item.x + 40 > player.x &&
-            item.y < player.y + player.height &&
-            item.y + 40 > player.y
-        ) {
-            score += item.score;
-            balance = Math.max(0, Math.min(100, balance + item.balance));
-            energy = Math.max(0, Math.min(100, energy + item.energy));
-            
-            // 衛教提示
-            if (item.type === "junk" && Math.random() < 0.6) {
-                console.log(`⚠️ ${item.name}：過多糖分/油脂會影響代謝`);
-            }
-            
-            items.splice(i, 1);
-        }
-        
-        if (item.x < -50) items.splice(i, 1);
-    }
-    
-    // 難度提升
-    if (distance % 300 === 0 && speed < 9) speed += 0.3;
-    
-    // 體力與均衡懲罰
-    if (frame % 60 === 0) {
-        energy -= 0.4;
-        if (balance < 60) energy -= 0.8;
-    }
-    
-    // 遊戲結束條件
-    if (energy <= 0 || balance <= 10) {
-        gameOver();
-        return;
-    }
-    
-    requestAnimationFrame(gameLoop);
-}
-
-// ==================== 遊戲結束 ====================
-function gameOver() {
-    gameRunning = false;
-    const report = document.getElementById('nutritionReport');
-    
-    let comment = '';
-    if (balance >= 85) comment = '🎉 優秀！你非常懂得均衡飲食！';
-    else if (balance >= 70) comment = '👍 不錯！可以再更均衡一些。';
-    else comment = '⚠️ 建議多攝取蔬菜與優質蛋白質，減少精緻糖。';
-    
-    report.innerHTML = `
-        <p>最終距離：${distance} 公尺</p>
-        <p>均衡指數：${balance}%　${comment}</p>
-        <p style="font-size:14px; margin-top:15px;">
-            衛教小提醒：<br>
-            均衡飲食是預防慢性病最重要的基礎<br>
-            建議每日遵循「我的餐盤」：½ 蔬果、¼ 優質蛋白、¼ 全穀
-        </p>
-    `;
-    
-    document.getElementById('finalScore').innerHTML = `總分：${score} 分`;
-    document.getElementById('gameOver').style.display = 'block';
-}
-
-function restart() {
-    location.reload();
-}
-
-// 開始遊戲
-document.addEventListener('keydown', e => {
+// ==================== 鍵盤控制 ====================
+window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
+    if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
     if (e.key === ' ' || e.key === 'Spacebar') jump();
 });
 
-gameLoop();
-</script>
+function jump() {
+    // 簡單跳躍視覺效果（可再擴充）
+    if (player.y === 380) player.y = 320;
+    setTimeout(() => { if (gameRunning) player.y = 380; }, 420);
+}
 
-<p style="margin-top:20px; color:#94a3b8;">
-    操作方式：按空白鍵跳躍　<br>
-    收集🥬🍎🐟等健康食物，避開🧋🍟🥤等高糖高油食物<br>
-    維持高均衡指數與體力才能跑得更遠！
-</p>
+// ==================== 主迴圈 ====================
+function gameLoop() {
+    if (!gameRunning) return;
+    frame++;
+    distance += Math.floor(speed / 3);
 
-</body>
-</html>
+    // 更新難度與場景
+    if (distance > (currentScene + 1) * 800) {
+        currentScene = Math.min(scenes.length - 1, currentScene + 1);
+        speed += 0.6; // 場景切換加速
+    }
+
+    const scene = scenes[currentScene];
+
+    // 清畫面 + 背景
+    ctx.fillStyle = scene.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 滾動地面
+    ctx.fillStyle = scene.ground;
+    ctx.fillRect(0, 480, canvas.width, 120);
+
+    // 畫跑道線
+    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.lineWidth = 6;
+    for (let x of lanes) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+
+    // 玩家（背後視角）
+    ctx.font = "70px Arial";
+    ctx.fillText("🏃", lanes[currentLane] - 30, player.y + 50);
+
+    // 生成物品與障礙
+    if (frame % Math.max(28, 45 - Math.floor(distance/300)) === 0) {
+        const isObstacle = Math.random() < (0.35 + currentScene * 0.08);
+        
+        if (isObstacle) {
+            obstacles.push({
+                x: lanes[Math.floor(Math.random()*3)],
+                y: -50,
+                emoji: "🚧"
+            });
+        } else {
+            items.push({
+                x: lanes[Math.floor(Math.random()*3)],
+                y: -60,
+                ...foodDB[Math.floor(Math.random() * foodDB.length)]
+            });
+        }
+    }
+
+    // 更新 & 繪製物品
+    for (let i = items.length-1; i >= 0; i--) {
+        let it = items[i];
+        it.y += speed;
+        ctx.font = "50px Arial";
+        ctx.fillText(it.emoji, it.x - 25, it.y);
+
+        if (Math.abs(it.x - lanes[currentLane]) < 50 && Math.abs(it.y - player.y) < 70) {
+            score += it.score;
+            balance = Math.max(10, Math.min(100, balance + it.balance));
+            energy = Math.max(5, Math.min(100, energy + it.energy));
+            items.splice(i,1);
+        }
+        if (it.y > canvas.height) items.splice(i,1);
+    }
+
+    // 更新 & 繪製障礙
+    for (let i = obstacles.length-1; i >= 0; i--) {
+        let ob = obstacles[i];
+        ob.y += speed * 1.1;
+        ctx.font = "55px Arial";
+        ctx.fillText(ob.emoji, ob.x - 30, ob.y);
+
+        if (Math.abs(ob.x - lanes[currentLane]) < 45 && Math.abs(ob.y - player.y) < 75) {
+            energy -= 35;
+            obstacles.splice(i,1);
+        }
+        if (ob.y > canvas.height) obstacles.splice(i,1);
+    }
+
+    // UI 更新
+    document.getElementById('distance').textContent = distance;
+    document.getElementById('score').textContent = score;
+    document.getElementById('balance').textContent = Math.floor(balance);
+    document.getElementById('energy').textContent = Math.floor(energy);
+
+    // 體力自然消耗 + 均衡懲罰
+    if (frame % 50 === 0) {
+        energy -= (0.6 + currentScene * 0.3);
+        if (balance < 55)
