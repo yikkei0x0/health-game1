@@ -1,198 +1,224 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>清醒之門｜藥物教育逃脫遊戲</title>
-    <style>
-        body {
-            font-family: "Microsoft JhengHei", Arial, sans-serif;
-            background: linear-gradient(#1a0033, #330033);
-            color: #ffccff;
-            margin: 0; padding: 0; height: 100vh; overflow: hidden;
-            text-align: center;
-        }
-        .room {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-size: cover; background-position: center;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px;
-        }
-        .active { display: flex !important; }
-        h1 { margin: 10px; text-shadow: 0 0 10px #ff00ff; }
-        .story-text {
-            max-width: 720px; background: rgba(0,0,0,0.75); padding: 20px;
-            border-radius: 15px; line-height: 1.7; margin: 15px;
-        }
-        button {
-            background: #660066; color: #ffccff; border: 2px solid #ff00ff;
-            padding: 12px 25px; margin: 8px; border-radius: 8px; cursor: pointer; font-size: 17px;
-        }
-        button:hover { background: #990099; transform: scale(1.05); }
-        .puzzle { background: rgba(0,0,0,0.85); padding: 25px; border-radius: 15px; max-width: 680px; margin: 15px; }
-        .clue { cursor: pointer; background: #330033; padding: 10px 18px; margin: 6px; display: inline-block; border: 1px dashed #ff99ff; border-radius: 6px; }
-        .inventory {
-            position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.8);
-            padding: 12px; border-radius: 10px; font-size: 15px;
-        }
-        input, select { padding: 10px; margin: 8px; font-size: 16px; }
-    </style>
+<meta charset="UTF-8">
+<title>營養衝線：均衡人生 - 成人衛教版</title>
+<style>
+    body { margin:0; font-family: 'Microsoft JhengHei', Arial; background: #0f172a; color: #fff; text-align:center; }
+    canvas { border: 3px solid #22d3ee; border-radius: 12px; background: linear-gradient(#0ea5e9, #22d3ee); }
+    #ui { position: absolute; top: 15px; left: 15px; font-size: 18px; }
+    #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px; border-radius: 15px; display: none; }
+</style>
 </head>
 <body>
 
-    <!-- 房間 1：開場 -->
-    <div id="room1" class="room active" style="background-image: url('https://picsum.photos/id/1015/1920/1080');">
-        <h1>清醒之門</h1>
-        <div class="story-text">
-            <p>你參加派對後，被不明藥物迷昏，醒來發現自己困在「迷幻幻境」中。</p>
-            <p>這裡是藥物扭曲你大腦後所製造的空間。只有徹底了解藥物的真相，你才能找到「清醒之門」逃出去。</p>
-        </div>
-        <button onclick="nextRoom(2)">開始逃脫</button>
-    </div>
+<h1>🍎 營養衝線：均衡人生 🍎</h1>
+<div id="ui">
+    距離: <span id="distance">0</span>m　|　
+    分數: <span id="score">0</span>　|　
+    均衡指數: <span id="balance">100</span>%　|　
+    體力: <span id="energy">100</span>
+</div>
 
-    <!-- 房間 2：藥物配對 + 數字計算 + 鑰匙 -->
-    <div id="room2" class="room" style="background-image: url('https://picsum.photos/id/201/1920/1080');">
-        <h1>第二關：危險配對室</h1>
-        <div class="story-text">
-            <p>桌上有很多藥物與效果卡片。請先正確配對，再計算「風險指數」才能找到開門鑰匙。</p>
-        </div>
-        <div class="puzzle">
-            <p><strong>藥物配對（點擊選擇正確效果）</strong></p>
-            <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:15px 0;">
-                <div class="clue" onclick="matchDrug(this)">K他命</div>
-                <div class="clue" onclick="matchDrug(this)">搖頭丸</div>
-                <div class="clue" onclick="matchDrug(this)">大麻</div>
-            </div>
-            <p id="match-result"></p>
+<canvas id="canvas" width="900" height="500"></canvas>
 
-            <p><strong>計算風險指數（加減運算）</strong></p>
-            <p>K他命立即風險 + 搖頭丸長期風險 - 大麻短期風險 = ？</p>
-            <input type="number" id="risk-calc" placeholder="輸入答案">
-            <button onclick="checkRiskCalc()">計算並找鑰匙</button>
-            <p id="room2-feedback"></p>
-        </div>
-        <button onclick="nextRoom(3)">前往下一關（需解鎖）</button>
-    </div>
+<div id="gameOver">
+    <h2>遊戲結束！</h2>
+    <p id="finalScore"></p>
+    <div id="nutritionReport"></div>
+    <button onclick="restart()">重新開始</button>
+</div>
 
-    <!-- 房間 3：後果排序 + 密碼鎖 + 線索 -->
-    <div id="room3" class="room" style="background-image: url('https://picsum.photos/id/870/1920/1080');">
-        <h1>第三關：時間與後果之鎖</h1>
-        <div class="story-text">
-            <p>牆上出現混亂的後果事件。你必須排序正確，並找出隱藏線索組成4位數密碼，才能打開最後的清醒之門。</p>
-        </div>
-        <div class="puzzle">
-            <p><strong>將以下後果排序（由立即到長期）</strong></p>
-            <select id="seq1"><option value="">立即</option><option value="1">幻覺、協調性喪失</option><option value="2">記憶力下降</option><option value="3">長期成癮與器官損傷</option></select><br><br>
+<script>
+// ==================== 遊戲變數 ====================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let gameRunning = true;
+let distance = 0;
+let score = 0;
+let balance = 100;
+let energy = 100;
+let speed = 5;
+
+// 玩家
+const player = {
+    x: 150,
+    y: 350,
+    width: 60,
+    height: 80,
+    vy: 0,
+    jumping: false
+};
+
+// 食物與障礙
+let items = [];
+
+// 食物資料庫（成人版更豐富）
+const foodDB = [
+    // 健康食物 (+分, +均衡)
+    {name:"綠葉菜", emoji:"🥬", type:"healthy", score:15, balance:8, energy:5},
+    {name:"糙米飯", emoji:"🍚", type:"healthy", score:12, balance:7, energy:8},
+    {name:"鮭魚", emoji:"🐟", type:"healthy", score:18, balance:9, energy:10},
+    {name:"堅果", emoji:"🥜", type:"healthy", score:14, balance:6, energy:12},
+    {name:"優格", emoji:"🥛", type:"healthy", score:13, balance:7, energy:6},
+    {name:"蘋果", emoji:"🍎", type:"healthy", score:10, balance:5, energy:4},
+    
+    // 不健康食物 (-分, -均衡, -體力)
+    {name:"珍奶", emoji:"🧋", type:"junk", score:-20, balance:-15, energy:-25},
+    {name:"炸雞", emoji:"🍟", type:"junk", score:-15, balance:-12, energy:-18},
+    {name:"可樂", emoji:"🥤", type:"junk", score:-18, balance:-20, energy:-30},
+    {name:"甜甜圈", emoji:"🍩", type:"junk", score:-12, balance:-10, energy:-15}
+];
+
+let keys = {};
+let frame = 0;
+
+// ==================== 控制 ====================
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+// 跳躍
+function jump() {
+    if (!player.jumping) {
+        player.vy = -18;
+        player.jumping = true;
+    }
+}
+
+// ==================== 主遊戲迴圈 ====================
+function gameLoop() {
+    if (!gameRunning) return;
+    
+    frame++;
+    distance += Math.floor(speed / 2);
+    
+    // 更新UI
+    document.getElementById('distance').textContent = distance;
+    document.getElementById('score').textContent = score;
+    document.getElementById('balance').textContent = balance;
+    document.getElementById('energy').textContent = Math.floor(energy);
+
+    // 背景
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 地面
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(0, 420, canvas.width, 80);
+    
+    // 玩家物理
+    player.vy += 0.8; // 重力
+    player.y += player.vy;
+    
+    if (player.y >= 350) {
+        player.y = 350;
+        player.vy = 0;
+        player.jumping = false;
+    }
+    
+    // 畫玩家
+    ctx.font = '60px Arial';
+    ctx.fillText('🏃', player.x, player.y + 60);
+    
+    // 生成物品
+    if (frame % 35 === 0) {
+        const isJunk = Math.random() < 0.45;
+        items.push({
+            x: canvas.width + 50,
+            y: Math.random() * 220 + 180,
+            ...foodDB[Math.floor(Math.random() * foodDB.length)]
+        });
+    }
+    
+    // 更新與繪製物品
+    for (let i = items.length - 1; i >= 0; i--) {
+        let item = items[i];
+        item.x -= speed;
+        
+        ctx.font = '45px Arial';
+        ctx.fillText(item.emoji, item.x, item.y);
+        
+        // 碰撞檢測
+        if (
+            item.x < player.x + player.width - 10 &&
+            item.x + 40 > player.x &&
+            item.y < player.y + player.height &&
+            item.y + 40 > player.y
+        ) {
+            score += item.score;
+            balance = Math.max(0, Math.min(100, balance + item.balance));
+            energy = Math.max(0, Math.min(100, energy + item.energy));
             
-            <button onclick="checkSequence()">驗證排序</button>
-            <p id="seq-feedback"></p>
-
-            <hr style="border-color:#660066; margin:20px 0;">
+            // 衛教提示
+            if (item.type === "junk" && Math.random() < 0.6) {
+                console.log(`⚠️ ${item.name}：過多糖分/油脂會影響代謝`);
+            }
             
-            <p><strong>找出隱藏線索並輸入4位數密碼</strong></p>
-            <p class="clue" onclick="getClue(1)">線索A：搖頭丸主要影響哪種神經傳導物質？（數字）</p>
-            <p class="clue" onclick="getClue(2)">線索B：K他命常見長期危害之一是？</p>
-            <input type="text" id="password" placeholder="輸入4位數密碼" maxlength="4">
-            <button onclick="checkPassword()">解鎖最終之門</button>
-            <p id="room3-feedback"></p>
-        </div>
-    </div>
-
-    <!-- 結束畫面 -->
-    <div id="ending" class="room" style="background-image: url('https://picsum.photos/id/1016/1920/1080'); background-color:#001a00;">
-        <h1>✅ 你成功逃出幻境！</h1>
-        <div class="story-text">
-            <p>恭喜你！透過這次的逃脫，你已了解藥物的分類、立即與長期危害，以及如何保護自己。</p>
-            <h3>關鍵學習重點</h3>
-            <ul style="text-align:left; max-width:520px; margin:20px auto;">
-                <li>任何非法藥物都會快速干擾大腦神經傳導物質</li>
-                <li>「只試一次」也可能導致成癮與永久性傷害</li>
-                <li>清楚、堅定的拒絕 + 充足知識是最有效的保護</li>
-            </ul>
-            <p>現實中遇到類似情況，請立即尋求信任的大人或專業協助。</p>
-        </div>
-        <button onclick="restartGame()">再玩一次</button>
-    </div>
-
-    <div class="inventory">
-        <strong>背包：</strong> <span id="inventory">無</span>
-    </div>
-
-    <script>
-        let inventory = [];
-
-        function nextRoom(room) {
-            if (room === 3 && !document.getElementById('room2-feedback').innerHTML.includes('✅')) {
-                alert("請先完成第二關！");
-                return;
-            }
-            document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
-            document.getElementById('room' + room).classList.add('active');
+            items.splice(i, 1);
         }
+        
+        if (item.x < -50) items.splice(i, 1);
+    }
+    
+    // 難度提升
+    if (distance % 300 === 0 && speed < 9) speed += 0.3;
+    
+    // 體力與均衡懲罰
+    if (frame % 60 === 0) {
+        energy -= 0.4;
+        if (balance < 60) energy -= 0.8;
+    }
+    
+    // 遊戲結束條件
+    if (energy <= 0 || balance <= 10) {
+        gameOver();
+        return;
+    }
+    
+    requestAnimationFrame(gameLoop);
+}
 
-        // 第二關 - 配對
-        function matchDrug(el) {
-            const drug = el.textContent;
-            let answer = prompt(`"${drug}" 的主要效果是？\n1. 解離、幻覺、失去痛覺\n2. 興奮、感覺增強、磨牙\n3. 放鬆、時間感扭曲`, "");
-            if (answer === "1" && drug === "K他命") el.style.background = "#006600";
-            else if (answer === "2" && drug === "搖頭丸") el.style.background = "#006600";
-            else if (answer === "3" && drug === "大麻") el.style.background = "#006600";
-            else alert("再想想看！");
-        }
+// ==================== 遊戲結束 ====================
+function gameOver() {
+    gameRunning = false;
+    const report = document.getElementById('nutritionReport');
+    
+    let comment = '';
+    if (balance >= 85) comment = '🎉 優秀！你非常懂得均衡飲食！';
+    else if (balance >= 70) comment = '👍 不錯！可以再更均衡一些。';
+    else comment = '⚠️ 建議多攝取蔬菜與優質蛋白質，減少精緻糖。';
+    
+    report.innerHTML = `
+        <p>最終距離：${distance} 公尺</p>
+        <p>均衡指數：${balance}%　${comment}</p>
+        <p style="font-size:14px; margin-top:15px;">
+            衛教小提醒：<br>
+            均衡飲食是預防慢性病最重要的基礎<br>
+            建議每日遵循「我的餐盤」：½ 蔬果、¼ 優質蛋白、¼ 全穀
+        </p>
+    `;
+    
+    document.getElementById('finalScore').innerHTML = `總分：${score} 分`;
+    document.getElementById('gameOver').style.display = 'block';
+}
 
-        function checkRiskCalc() {
-            const ans = document.getElementById('risk-calc').value;
-            if (ans === "8" || ans === "8") {   // 例如：5 + 6 - 3 = 8（可依需求調整數值）
-                document.getElementById('room2-feedback').innerHTML = 
-                    '<span style="color:#00ff00">✅ 正確！風險指數極高。你找到「風險警示鑰匙」。</span>';
-                inventory.push("風險警示鑰匙");
-                document.getElementById('inventory').textContent = inventory.join("、");
-            } else {
-                document.getElementById('room2-feedback').innerHTML = 
-                    '<span style="color:#ff6666">❌ 計算錯誤！請重新檢視藥物危害程度。</span>';
-            }
-        }
+function restart() {
+    location.reload();
+}
 
-        // 第三關 - 排序與密碼
-        function checkSequence() {
-            const seq = document.getElementById('seq1').value;
-            if (seq === "1") {
-                document.getElementById('seq-feedback').innerHTML = 
-                    '<span style="color:#00ff00">排序正確！立即效果最危險。</span>';
-            } else {
-                document.getElementById('seq-feedback').innerHTML = 
-                    '<span style="color:#ffaa00">請注意：立即效果通常最劇烈且危險。</span>';
-            }
-        }
+// 開始遊戲
+document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'Spacebar') jump();
+});
 
-        let clues = {};
-        function getClue(n) {
-            if (n === 1) {
-                clues[1] = prompt("搖頭丸（MDMA）主要影響哪種神經傳導物質？（請輸入數字：1.多巴胺 2.血清素 3. GABA）", "");
-                alert(clues[1] === "2" ? "正確！血清素（Serotonin）" : "再試一次");
-            } else if (n === 2) {
-                clues[2] = prompt("K他命長期危害之一常見的是？（輸入數字：1.膀胱萎縮 2.肝硬化 3.肺損傷）", "");
-            }
-        }
+gameLoop();
+</script>
 
-        function checkPassword() {
-            const pw = document.getElementById('password').value;
-            if (pw === "5231") {   // 教育相關數字，可自行替換
-                document.getElementById('room3-feedback').innerHTML = 
-                    '<span style="color:#00ff00; font-size:22px">✅ 密碼正確！你成功打開清醒之門！</span>';
-                setTimeout(() => {
-                    document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
-                    document.getElementById('ending').classList.add('active');
-                }, 1200);
-            } else {
-                document.getElementById('room3-feedback').innerHTML = 
-                    '<span style="color:#ff6666">密碼錯誤！請收集更多線索後再試。</span>';
-            }
-        }
+<p style="margin-top:20px; color:#94a3b8;">
+    操作方式：按空白鍵跳躍　<br>
+    收集🥬🍎🐟等健康食物，避開🧋🍟🥤等高糖高油食物<br>
+    維持高均衡指數與體力才能跑得更遠！
+</p>
 
-        function restartGame() {
-            location.reload();
-        }
-    </script>
 </body>
 </html>
