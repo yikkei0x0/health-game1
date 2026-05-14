@@ -6,8 +6,8 @@
 <style>
     body { margin:0; font-family: 'Microsoft JhengHei', Arial; background: #0f172a; color: #fff; text-align:center; }
     canvas { border: 3px solid #22d3ee; border-radius: 12px; background: #111; }
-    #ui { position: absolute; top: 15px; left: 15px; font-size: 18px; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; }
-    #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15,23,42,0.95); padding: 30px; border-radius: 15px; width: 80%; max-width: 600px; display: none; }
+    #ui { position: absolute; top: 15px; left: 15px; font-size: 18px; background: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 8px; }
+    #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15,23,42,0.95); padding: 30px; border-radius: 15px; width: 80%; max-width: 620px; display: none; }
 </style>
 </head>
 <body>
@@ -39,31 +39,26 @@ let distance = 0;
 let score = 0;
 let balance = 100;
 let energy = 100;
-let speed = 6;
+let speed = 6.5;
 let currentScene = 0;
 
-const lanes = [250, 400, 550]; // 三條跑道 X 座標
-let currentLane = 1; // 0,1,2
+const lanes = [240, 400, 560]; // 三條跑道 X 座標
+let currentLane = 1;
 
-// 玩家
-const player = { y: 380, height: 90, width: 60 };
-
-// 物品與障礙
+let playerY = 380;
+let frame = 0;
 let items = [];
 let obstacles = [];
 
-// 場景定義
+// 場景定義（加強視覺）
 const scenes = [
-    {name: "城市街道", bg: "#334155", ground: "#1e2937", speedBoost: 0},
-    {name: "超市通道", bg: "#7c3aed", ground: "#6d28d9", speedBoost: 1},
-    {name: "健康農場", bg: "#166534", ground: "#14532d", speedBoost: 2},
-    {name: "身體循環", bg: "#b91c1c", ground: "#991b1b", speedBoost: 3}
+    {name: "城市街道", bgTop: "#1e2937", bgBottom: "#334155", decor: "city"},
+    {name: "超市通道", bgTop: "#6b21a8", bgBottom: "#7e22ce", decor: "supermarket"},
+    {name: "健康農場", bgTop: "#166534", bgBottom: "#4ade80", decor: "farm"},
+    {name: "身體循環", bgTop: "#9f1239", bgBottom: "#e11d48", decor: "body"}
 ];
 
-let frame = 0;
-let keys = {};
-
-// ==================== 食物資料 ====================
+// 食物資料
 const foodDB = [
     {emoji:"🥬", type:"healthy", score:15, balance:8, energy:5},
     {emoji:"🍎", type:"healthy", score:12, balance:7, energy:6},
@@ -74,118 +69,143 @@ const foodDB = [
     {emoji:"🍩", type:"junk", score:-15, balance:-12, energy:-18}
 ];
 
-// ==================== 鍵盤控制 ====================
+let keys = {};
+
+// ==================== 控制 ====================
 window.addEventListener('keydown', e => {
     keys[e.key] = true;
     if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
     if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
-    if (e.key === ' ' || e.key === 'Spacebar') jump();
 });
 
 function jump() {
-    // 簡單跳躍視覺效果（可再擴充）
-    if (player.y === 380) player.y = 320;
-    setTimeout(() => { if (gameRunning) player.y = 380; }, 420);
+    if (playerY === 380) {
+        playerY = 300;
+        setTimeout(() => { if (gameRunning) playerY = 380; }, 380);
+    }
 }
 
-// ==================== 主迴圈 ====================
+// ==================== 繪製背景 ====================
+function drawBackground(scene) {
+    // 天空漸層
+    let grad = ctx.createLinearGradient(0, 0, 0, 480);
+    grad.addColorStop(0, scene.bgTop);
+    grad.addColorStop(1, scene.bgBottom);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, 480);
+
+    // 場景裝飾
+    ctx.font = "40px Arial";
+    if (scene.decor === "city") {
+        ctx.fillText("🏢", 80, 180);
+        ctx.fillText("🏢", 620, 140);
+        ctx.fillText("🌆", 350, 120);
+    } else if (scene.decor === "supermarket") {
+        ctx.fillText("🛒", 120, 160);
+        ctx.fillText("📦", 280, 200);
+        ctx.fillText("🛒", 550, 150);
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.fillRect(100, 280, 600, 8); // 貨架
+    } else if (scene.decor === "farm") {
+        ctx.fillText("🌾", 100, 180);
+        ctx.fillText("🐄", 650, 190);
+    }
+
+    // 地面
+    ctx.fillStyle = "#1f2937";
+    ctx.fillRect(0, 480, canvas.width, 120);
+
+    // 道路分隔線（虛線，更自然）
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 8;
+    ctx.setLineDash([40, 25]);
+    for (let i = 1; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(lanes[i]-2, 480);
+        ctx.lineTo(lanes[i]-2, 600);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]);
+}
+
+// ==================== 主遊戲迴圈 ====================
 function gameLoop() {
     if (!gameRunning) return;
     frame++;
     distance += Math.floor(speed / 3);
 
-    // 更新難度與場景
-    if (distance > (currentScene + 1) * 800) {
+    // 場景切換
+    if (distance > (currentScene + 1) * 850) {
         currentScene = Math.min(scenes.length - 1, currentScene + 1);
-        speed += 0.6; // 場景切換加速
+        speed += 0.4;   // 修正：速度增加變慢
     }
 
     const scene = scenes[currentScene];
 
-    // 清畫面 + 背景
-    ctx.fillStyle = scene.bg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawBackground(scene);
 
-    // 滾動地面
-    ctx.fillStyle = scene.ground;
-    ctx.fillRect(0, 480, canvas.width, 120);
-
-    // 畫跑道線
-    ctx.strokeStyle = "rgba(255,255,255,0.3)";
-    ctx.lineWidth = 6;
-    for (let x of lanes) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-    }
-
-    // 玩家（背後視角）
-    ctx.font = "70px Arial";
-    ctx.fillText("🏃", lanes[currentLane] - 30, player.y + 50);
+    // 玩家
+    ctx.font = "75px Arial";
+    ctx.fillText("🏃", lanes[currentLane] - 35, playerY + 55);
 
     // 生成物品與障礙
-    if (frame % Math.max(28, 45 - Math.floor(distance/300)) === 0) {
-        const isObstacle = Math.random() < (0.35 + currentScene * 0.08);
+    if (frame % Math.max(32, 48 - Math.floor(distance/400)) === 0) {
+        const isObstacle = Math.random() < (0.32 + currentScene * 0.07);
         
         if (isObstacle) {
-            obstacles.push({
-                x: lanes[Math.floor(Math.random()*3)],
-                y: -50,
-                emoji: "🚧"
-            });
+            obstacles.push({ x: lanes[Math.floor(Math.random()*3)], y: -40, emoji: "🚧" });
         } else {
             items.push({
                 x: lanes[Math.floor(Math.random()*3)],
-                y: -60,
+                y: -50,
                 ...foodDB[Math.floor(Math.random() * foodDB.length)]
             });
         }
     }
 
-    // 更新 & 繪製物品
+    // 更新物品
     for (let i = items.length-1; i >= 0; i--) {
         let it = items[i];
         it.y += speed;
-        ctx.font = "50px Arial";
-        ctx.fillText(it.emoji, it.x - 25, it.y);
+        ctx.font = "48px Arial";
+        ctx.fillText(it.emoji, it.x - 24, it.y);
 
-        if (Math.abs(it.x - lanes[currentLane]) < 50 && Math.abs(it.y - player.y) < 70) {
+        if (Math.abs(it.x - lanes[currentLane]) < 48 && Math.abs(it.y - playerY) < 65) {
             score += it.score;
             balance = Math.max(10, Math.min(100, balance + it.balance));
             energy = Math.max(5, Math.min(100, energy + it.energy));
-            items.splice(i,1);
+            items.splice(i, 1);
         }
-        if (it.y > canvas.height) items.splice(i,1);
+        if (it.y > 650) items.splice(i,1);
     }
 
-    // 更新 & 繪製障礙
+    // 更新障礙
     for (let i = obstacles.length-1; i >= 0; i--) {
         let ob = obstacles[i];
-        ob.y += speed * 1.1;
-        ctx.font = "55px Arial";
-        ctx.fillText(ob.emoji, ob.x - 30, ob.y);
+        ob.y += speed * 1.05;
+        ctx.font = "52px Arial";
+        ctx.fillText(ob.emoji, ob.x - 28, ob.y);
 
-        if (Math.abs(ob.x - lanes[currentLane]) < 45 && Math.abs(ob.y - player.y) < 75) {
-            energy -= 35;
+        if (Math.abs(ob.x - lanes[currentLane]) < 45 && Math.abs(ob.y - playerY) < 70) {
+            energy -= 32;
             obstacles.splice(i,1);
         }
-        if (ob.y > canvas.height) obstacles.splice(i,1);
+        if (ob.y > 650) obstacles.splice(i,1);
     }
 
-    // UI 更新
+    // UI
     document.getElementById('distance').textContent = distance;
     document.getElementById('score').textContent = score;
     document.getElementById('balance').textContent = Math.floor(balance);
     document.getElementById('energy').textContent = Math.floor(energy);
 
-    // 體力自然消耗 + 均衡懲罰
-    if (frame % 50 === 0) {
-        energy -= (0.6 + currentScene * 0.3);
-        if (balance < 55) energy -= 1.2;
+    // 消耗
+    if (frame % 45 === 0) {
+        energy -= (0.55 + currentScene * 0.25);
+        if (balance < 50) energy -= 0.9;
     }
 
-    if (energy <= 15 || balance <= 15) {
+    if (energy <= 12 || balance <= 12) {
         gameOver();
         return;
     }
@@ -196,34 +216,34 @@ function gameLoop() {
 // ==================== 遊戲結束 ====================
 function gameOver() {
     gameRunning = false;
-    let comment = balance >= 80 ? "🎉 你的飲食習慣非常均衡，值得作為榜樣！" :
-                  balance >= 60 ? "👍 還不錯！建議再加強蔬菜與優質蛋白質。" :
-                  "⚠️ 長期這樣吃容易累積慢性病風險，該調整飲食了。";
+    let comment = balance >= 78 ? "🎉 非常優秀的均衡飲食習慣！" :
+                  balance >= 60 ? "👍 整體不錯，還有進步空間。" :
+                  "⚠️ 建議調整飲食習慣，減少精緻糖與油脂。";
 
     document.getElementById('finalScore').innerHTML = `最終距離：${distance} 公尺 | 總分：${score}`;
     document.getElementById('nutritionReport').innerHTML = `
         <p><strong>均衡指數：${Math.floor(balance)}%　${comment}</strong></p>
-        <p style="font-size:15px; line-height:1.6; margin-top:20px;">
-            💡 衛教重點：<br>
-            • 每日遵循「我的餐盤」：½蔬果、¼全穀、¼優質蛋白<br>
-            • 減少含糖飲料與加工食品，可大幅降低三高風險
+        <p style="font-size:15px; line-height:1.7;">
+            💡 衛教提醒：均衡飲食是預防慢性病最有效的武器<br>
+            建議遵循「我的餐盤」原則，守護長期健康。
         </p>
     `;
     document.getElementById('gameOver').style.display = 'block';
 }
 
-function restart() {
-    location.reload();
-}
+function restart() { location.reload(); }
 
-// 啟動遊戲
+// 跳躍控制
+document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'Spacebar') jump();
+});
+
 gameLoop();
 </script>
 
-<p style="margin-top:20px; color:#94a3b8; font-size:15px;">
-    操作方式：<br>
-    ← → 方向鍵（或 A / D）切換跑道　｜　空白鍵 跳躍躲障礙<br>
-    收集健康食物，避開垃圾食物，維持均衡與體力跑得更遠！
+<p style="margin-top:20px; color:#94a3b8;">
+    操作方式：← → 方向鍵（或 A / D）切換跑道　｜　空白鍵 跳躍<br>
+    收集健康食物，避開垃圾食物，維持均衡指數與體力！
 </p>
 
 </body>
