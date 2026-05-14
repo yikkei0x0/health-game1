@@ -9,69 +9,33 @@
             font-family: "Microsoft JhengHei", Arial, sans-serif;
             background: linear-gradient(#1a0033, #330033);
             color: #ffccff;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; padding: 0; height: 100vh; overflow: hidden;
             text-align: center;
         }
         .room {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-size: cover;
-            background-position: center;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-size: cover; background-position: center;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
             padding: 20px;
         }
         .active { display: flex !important; }
-        
         h1 { margin: 10px; text-shadow: 0 0 10px #ff00ff; }
         .story-text {
-            max-width: 700px;
-            background: rgba(0,0,0,0.7);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 15px auto;
-            line-height: 1.6;
+            max-width: 720px; background: rgba(0,0,0,0.75); padding: 20px;
+            border-radius: 15px; line-height: 1.7; margin: 15px;
         }
         button {
-            background: #660066;
-            color: #ffccff;
-            border: 2px solid #ff00ff;
-            padding: 12px 25px;
-            margin: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
+            background: #660066; color: #ffccff; border: 2px solid #ff00ff;
+            padding: 12px 25px; margin: 8px; border-radius: 8px; cursor: pointer; font-size: 17px;
         }
         button:hover { background: #990099; transform: scale(1.05); }
-        
-        .puzzle {
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 15px;
-            max-width: 600px;
-            margin: 15px;
-        }
+        .puzzle { background: rgba(0,0,0,0.85); padding: 25px; border-radius: 15px; max-width: 680px; margin: 15px; }
+        .clue { cursor: pointer; background: #330033; padding: 10px 18px; margin: 6px; display: inline-block; border: 1px dashed #ff99ff; border-radius: 6px; }
         .inventory {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 10px;
+            position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.8);
+            padding: 12px; border-radius: 10px; font-size: 15px;
         }
-        .clue {
-            cursor: pointer;
-            background: #330033;
-            padding: 8px 15px;
-            margin: 5px;
-            display: inline-block;
-            border: 1px dashed #ff99ff;
-        }
+        input, select { padding: 10px; margin: 8px; font-size: 16px; }
     </style>
 </head>
 <body>
@@ -80,82 +44,72 @@
     <div id="room1" class="room active" style="background-image: url('https://picsum.photos/id/1015/1920/1080');">
         <h1>清醒之門</h1>
         <div class="story-text">
-            <p>你是一位高二學生，週末去參加朋友的派對。有人把不明藥物偷偷加進你的飲料……</p>
-            <p>醒來後，你發現自己被困在一個充滿幻覺的「迷幻房間」裡。</p>
-            <p>這裡是藥物對大腦製造的幻境。只有正確解開所有關於藥物的謎題，了解其前因後果，你才能找到「清醒之門」逃出去。</p>
+            <p>你參加派對後，被不明藥物迷昏，醒來發現自己困在「迷幻幻境」中。</p>
+            <p>這裡是藥物扭曲你大腦後所製造的空間。只有徹底了解藥物的真相，你才能找到「清醒之門」逃出去。</p>
         </div>
         <button onclick="nextRoom(2)">開始逃脫</button>
     </div>
 
-    <!-- 房間 2：藥物辨識 -->
+    <!-- 房間 2：藥物配對 + 數字計算 + 鑰匙 -->
     <div id="room2" class="room" style="background-image: url('https://picsum.photos/id/201/1920/1080');">
-        <h1>第一關：迷幻藥瓶</h1>
+        <h1>第二關：危險配對室</h1>
         <div class="story-text">
-            <p>桌上散落許多藥瓶。你必須把藥物正確分類，才能打開下一個抽屜。</p>
+            <p>桌上有很多藥物與效果卡片。請先正確配對，再計算「風險指數」才能找到開門鑰匙。</p>
         </div>
         <div class="puzzle">
-            <p><strong>請將以下拖曳到正確分類（點擊後選擇）</strong></p>
-            <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin:20px 0;">
-                <div class="clue" onclick="selectDrug(this)">K他命</div>
-                <div class="clue" onclick="selectDrug(this)">止痛藥</div>
-                <div class="clue" onclick="selectDrug(this)">搖頭丸</div>
-                <div class="clue" onclick="selectDrug(this)">感冒藥</div>
+            <p><strong>藥物配對（點擊選擇正確效果）</strong></p>
+            <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:15px 0;">
+                <div class="clue" onclick="matchDrug(this)">K他命</div>
+                <div class="clue" onclick="matchDrug(this)">搖頭丸</div>
+                <div class="clue" onclick="matchDrug(this)">大麻</div>
             </div>
-            <button onclick="checkRoom2()">確認分類</button>
+            <p id="match-result"></p>
+
+            <p><strong>計算風險指數（加減運算）</strong></p>
+            <p>K他命立即風險 + 搖頭丸長期風險 - 大麻短期風險 = ？</p>
+            <input type="number" id="risk-calc" placeholder="輸入答案">
+            <button onclick="checkRiskCalc()">計算並找鑰匙</button>
             <p id="room2-feedback"></p>
         </div>
-        <button onclick="nextRoom(3)">繼續（正確後解鎖）</button>
+        <button onclick="nextRoom(3)">前往下一關（需解鎖）</button>
     </div>
 
-    <!-- 房間 3：後果時間軸 -->
+    <!-- 房間 3：後果排序 + 密碼鎖 + 線索 -->
     <div id="room3" class="room" style="background-image: url('https://picsum.photos/id/870/1920/1080');">
-        <h1>第二關：後果時間軸</h1>
+        <h1>第三關：時間與後果之鎖</h1>
         <div class="story-text">
-            <p>牆上出現時間軸。你必須把「使用某物質」後的後果按時間順序排好，才能開啟下一道門。</p>
+            <p>牆上出現混亂的後果事件。你必須排序正確，並找出隱藏線索組成4位數密碼，才能打開最後的清醒之門。</p>
         </div>
         <div class="puzzle">
-            <p>選擇物質：<select id="substance">
-                <option value="ketamine">K他命</option>
-                <option value="mdma">搖頭丸</option>
-            </select></p>
-            <div style="margin:20px 0;">
-                <button onclick="sortConsequence()">排列後果</button>
-            </div>
-            <p id="timeline"></p>
-            <p id="room3-feedback"></p>
-        </div>
-        <button onclick="nextRoom(4)">繼續</button>
-    </div>
+            <p><strong>將以下後果排序（由立即到長期）</strong></p>
+            <select id="seq1"><option value="">立即</option><option value="1">幻覺、協調性喪失</option><option value="2">記憶力下降</option><option value="3">長期成癮與器官損傷</option></select><br><br>
+            
+            <button onclick="checkSequence()">驗證排序</button>
+            <p id="seq-feedback"></p>
 
-    <!-- 房間 4：拒絕技巧 -->
-    <div id="room4" class="room" style="background-image: url('https://picsum.photos/id/133/1920/1080');">
-        <h1>第三關：拒絕之鎖</h1>
-        <div class="story-text">
-            <p>朋友在門口邀約你：「來嘛，就試一次不會怎樣！」<br>你必須選擇正確的拒絕方式，才能打開最後的清醒之門。</p>
-        </div>
-        <div class="puzzle">
-            <p><strong>選擇最佳回應：</strong></p>
-            <button onclick="chooseResponse(1)">「好啊，下次再說」</button>
-            <button onclick="chooseResponse(2)">「不用了，我身體不舒服」</button>
-            <button onclick="chooseResponse(3)">「我已經了解這些藥物的危害，我選擇拒絕」</button>
-            <p id="room4-feedback"></p>
+            <hr style="border-color:#660066; margin:20px 0;">
+            
+            <p><strong>找出隱藏線索並輸入4位數密碼</strong></p>
+            <p class="clue" onclick="getClue(1)">線索A：搖頭丸主要影響哪種神經傳導物質？（數字）</p>
+            <p class="clue" onclick="getClue(2)">線索B：K他命常見長期危害之一是？</p>
+            <input type="text" id="password" placeholder="輸入4位數密碼" maxlength="4">
+            <button onclick="checkPassword()">解鎖最終之門</button>
+            <p id="room3-feedback"></p>
         </div>
     </div>
 
     <!-- 結束畫面 -->
     <div id="ending" class="room" style="background-image: url('https://picsum.photos/id/1016/1920/1080'); background-color:#001a00;">
-        <h1>✅ 你成功逃脫！</h1>
+        <h1>✅ 你成功逃出幻境！</h1>
         <div class="story-text">
-            <p>恭喜你！透過解謎，你了解了藥物的分類、立即與長期危害，以及如何堅定拒絕。</p>
-            <p><strong>真實故事結局：</strong><br>
-            藥物不會讓你「更開心」或「更放鬆」，它只會偷走你的健康、未來與清醒的自己。</p>
-            <p>現實中，遇到類似情況請勇敢說「不」，並尋求老師、父母或專業協助。</p>
-            <h2>學習重點回顧</h2>
-            <ul style="text-align:left; max-width:500px; margin:20px auto;">
-                <li>非法藥物會快速影響大腦神經傳導物質</li>
-                <li>即使「只試一次」也可能造成成癮與永久傷害</li>
-                <li>拒絕技巧 + 充足知識 = 最好的保護</li>
+            <p>恭喜你！透過這次的逃脫，你已了解藥物的分類、立即與長期危害，以及如何保護自己。</p>
+            <h3>關鍵學習重點</h3>
+            <ul style="text-align:left; max-width:520px; margin:20px auto;">
+                <li>任何非法藥物都會快速干擾大腦神經傳導物質</li>
+                <li>「只試一次」也可能導致成癮與永久性傷害</li>
+                <li>清楚、堅定的拒絕 + 充足知識是最有效的保護</li>
             </ul>
+            <p>現實中遇到類似情況，請立即尋求信任的大人或專業協助。</p>
         </div>
         <button onclick="restartGame()">再玩一次</button>
     </div>
@@ -165,89 +119,80 @@
     </div>
 
     <script>
-        let currentRoom = 1;
         let inventory = [];
 
         function nextRoom(room) {
-            if (room === 3 && !checkRoom2Answer()) {
-                alert("請先正確完成第一關！");
+            if (room === 3 && !document.getElementById('room2-feedback').innerHTML.includes('✅')) {
+                alert("請先完成第二關！");
                 return;
             }
             document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
             document.getElementById('room' + room).classList.add('active');
-            currentRoom = room;
         }
 
-        // 第一關 - 藥物分類
-        let selectedDrugs = {};
-        function selectDrug(el) {
-            const name = el.textContent;
-            const category = prompt(`"${name}" 應該分類到？\n1. 合法成藥\n2. 處方藥\n3. 非法藥物`, "3");
-            if (category) {
-                selectedDrugs[name] = category;
-                el.style.background = "#006600";
-                el.textContent = name + " ✓";
-            }
+        // 第二關 - 配對
+        function matchDrug(el) {
+            const drug = el.textContent;
+            let answer = prompt(`"${drug}" 的主要效果是？\n1. 解離、幻覺、失去痛覺\n2. 興奮、感覺增強、磨牙\n3. 放鬆、時間感扭曲`, "");
+            if (answer === "1" && drug === "K他命") el.style.background = "#006600";
+            else if (answer === "2" && drug === "搖頭丸") el.style.background = "#006600";
+            else if (answer === "3" && drug === "大麻") el.style.background = "#006600";
+            else alert("再想想看！");
         }
 
-        function checkRoom2Answer() {
-            if (selectedDrugs["K他命"] === "3" && 
-                selectedDrugs["搖頭丸"] === "3" && 
-                selectedDrugs["止痛藥"] === "2" && 
-                selectedDrugs["感冒藥"] === "1") {
-                return true;
-            }
-            return false;
-        }
-
-        function checkRoom2() {
-            if (checkRoom2Answer()) {
+        function checkRiskCalc() {
+            const ans = document.getElementById('risk-calc').value;
+            if (ans === "8" || ans === "8") {   // 例如：5 + 6 - 3 = 8（可依需求調整數值）
                 document.getElementById('room2-feedback').innerHTML = 
-                    '<span style="color:#00ff00">✅ 正確！這些非法藥物會嚴重影響大腦與判斷力。</span>';
-                inventory.push("藥物分類卡");
-                document.getElementById('inventory').textContent = inventory.join(", ");
+                    '<span style="color:#00ff00">✅ 正確！風險指數極高。你找到「風險警示鑰匙」。</span>';
+                inventory.push("風險警示鑰匙");
+                document.getElementById('inventory').textContent = inventory.join("、");
             } else {
                 document.getElementById('room2-feedback').innerHTML = 
-                    '<span style="color:#ff6666">❌ 請再確認分類。非法藥物危害極大！</span>';
+                    '<span style="color:#ff6666">❌ 計算錯誤！請重新檢視藥物危害程度。</span>';
             }
         }
 
-        // 第二關 - 後果時間軸
-        function sortConsequence() {
-            const sub = document.getElementById('substance').value;
-            let msg = "";
-            if (sub === "ketamine") {
-                msg = "立即：幻覺、失去痛覺 → 幾小時後：記憶損傷、尿路問題 → 長期：嚴重成癮、認知功能下降、膀胱萎縮";
+        // 第三關 - 排序與密碼
+        function checkSequence() {
+            const seq = document.getElementById('seq1').value;
+            if (seq === "1") {
+                document.getElementById('seq-feedback').innerHTML = 
+                    '<span style="color:#00ff00">排序正確！立即效果最危險。</span>';
             } else {
-                msg = "立即：興奮、感覺增強 → 幾小時後：情緒低落、失眠 → 長期：血清素耗竭、憂鬱、記憶力受損";
+                document.getElementById('seq-feedback').innerHTML = 
+                    '<span style="color:#ffaa00">請注意：立即效果通常最劇烈且危險。</span>';
             }
-            document.getElementById('timeline').innerHTML = `<strong>${msg}</strong>`;
-            document.getElementById('room3-feedback').innerHTML = 
-                '<span style="color:#00ff00">✅ 你了解了藥物的時間軸危害！</span>';
-            inventory.push("後果時間軸");
-            document.getElementById('inventory').textContent = inventory.join(", ");
         }
 
-        // 第三關 - 拒絕技巧
-        function chooseResponse(choice) {
-            const feedback = document.getElementById('room4-feedback');
-            if (choice === 3) {
-                feedback.innerHTML = '<span style="color:#00ff00; font-size:20px">✅ 完美拒絕！你成功開啟清醒之門！</span>';
+        let clues = {};
+        function getClue(n) {
+            if (n === 1) {
+                clues[1] = prompt("搖頭丸（MDMA）主要影響哪種神經傳導物質？（請輸入數字：1.多巴胺 2.血清素 3. GABA）", "");
+                alert(clues[1] === "2" ? "正確！血清素（Serotonin）" : "再試一次");
+            } else if (n === 2) {
+                clues[2] = prompt("K他命長期危害之一常見的是？（輸入數字：1.膀胱萎縮 2.肝硬化 3.肺損傷）", "");
+            }
+        }
+
+        function checkPassword() {
+            const pw = document.getElementById('password').value;
+            if (pw === "5231") {   // 教育相關數字，可自行替換
+                document.getElementById('room3-feedback').innerHTML = 
+                    '<span style="color:#00ff00; font-size:22px">✅ 密碼正確！你成功打開清醒之門！</span>';
                 setTimeout(() => {
                     document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
                     document.getElementById('ending').classList.add('active');
-                }, 1500);
+                }, 1200);
             } else {
-                feedback.innerHTML = '<span style="color:#ffaa00">這個回答不夠堅定，容易被繼續說服。最佳方式是清楚表達自己的決定與原因。</span>';
+                document.getElementById('room3-feedback').innerHTML = 
+                    '<span style="color:#ff6666">密碼錯誤！請收集更多線索後再試。</span>';
             }
         }
 
         function restartGame() {
             location.reload();
         }
-
-        // 初始提示
-        console.log("%c藥物教育逃脫遊戲已載入 - 請認真思考每個選擇", "color:#ff99ff; font-size:14px");
     </script>
 </body>
 </html>
