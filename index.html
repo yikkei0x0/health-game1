@@ -3,100 +3,203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>健康防衛消消樂</title>
+
+<title>健康防衛消消樂 PRO</title>
 
 <style>
+
 body{
     margin:0;
-    background:linear-gradient(180deg,#dff6ff,#ffffff);
+    background:linear-gradient(180deg,#d7f3ff,#ffffff);
     font-family:"Microsoft JhengHei",sans-serif;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    min-height:100vh;
+    overflow:hidden;
 }
 
 h1{
-    margin-top:20px;
+    text-align:center;
     color:#1565c0;
-    text-shadow:2px 2px 4px rgba(0,0,0,0.2);
+    margin-top:10px;
+}
+
+#topUI{
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    font-size:22px;
+    font-weight:bold;
+    color:#0d47a1;
 }
 
 #game{
-    margin-top:20px;
+    width:600px;
+    height:600px;
+    margin:20px auto;
     display:grid;
-    grid-template-columns:repeat(8,70px);
-    grid-template-rows:repeat(8,70px);
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(8,1fr);
     gap:5px;
     background:#90caf9;
     padding:10px;
     border-radius:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
 }
 
 .cell{
-    width:70px;
-    height:70px;
     background:white;
     border-radius:15px;
     display:flex;
-    justify-content:center;
     align-items:center;
-    font-size:38px;
+    justify-content:center;
+    font-size:40px;
     cursor:pointer;
-    transition:0.2s;
+    transition:
+        transform 0.25s,
+        top 0.3s,
+        left 0.3s,
+        opacity 0.25s;
+    position:relative;
     user-select:none;
 }
 
 .cell:hover{
     transform:scale(1.08);
-    background:#e3f2fd;
 }
 
 .selected{
-    outline:4px solid #ff9800;
+    outline:4px solid orange;
 }
 
-#scoreBoard{
-    margin-top:20px;
-    font-size:24px;
-    color:#0d47a1;
-    font-weight:bold;
+.destroy{
+    animation:explode 0.35s forwards;
+}
+
+@keyframes explode{
+    0%{
+        transform:scale(1);
+        opacity:1;
+    }
+    100%{
+        transform:scale(0);
+        opacity:0;
+    }
+}
+
+.fall{
+    animation:fallAnim 0.3s;
+}
+
+@keyframes fallAnim{
+    0%{
+        transform:translateY(-40px);
+        opacity:0;
+    }
+    100%{
+        transform:translateY(0);
+        opacity:1;
+    }
 }
 
 #tip{
-    margin-top:15px;
-    width:80%;
-    max-width:700px;
+    width:600px;
+    margin:auto;
     background:white;
     padding:15px;
     border-radius:15px;
-    box-shadow:0 5px 15px rgba(0,0,0,0.1);
-    color:#333;
-    font-size:18px;
     text-align:center;
+    box-shadow:0 5px 15px rgba(0,0,0,0.15);
+}
+
+#skills{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    margin-top:10px;
+}
+
+.skillBtn{
+    padding:12px 20px;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    cursor:pointer;
+    background:#42a5f5;
+    color:white;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.skillBtn:hover{
+    transform:scale(1.08);
+}
+
+#combo{
+    position:fixed;
+    top:120px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:48px;
+    color:#ff5722;
+    font-weight:bold;
+    opacity:0;
+    pointer-events:none;
+}
+
+.showCombo{
+    animation:comboAnim 1s;
+}
+
+@keyframes comboAnim{
+    0%{
+        opacity:0;
+        transform:translateX(-50%) scale(0.5);
+    }
+    40%{
+        opacity:1;
+        transform:translateX(-50%) scale(1.3);
+    }
+    100%{
+        opacity:0;
+        transform:translateX(-50%) scale(1);
+    }
 }
 
 @media(max-width:700px){
+
     #game{
-        grid-template-columns:repeat(8,40px);
-        grid-template-rows:repeat(8,40px);
+        width:95vw;
+        height:95vw;
     }
 
     .cell{
-        width:40px;
-        height:40px;
-        font-size:24px;
+        font-size:28px;
+    }
+
+    #tip{
+        width:90%;
     }
 }
+
 </style>
 </head>
 
 <body>
 
-<h1>🩺 健康防衛消消樂 🩺</h1>
+<h1>🩺 健康防衛消消樂 PRO 🩺</h1>
 
-<div id="scoreBoard">分數：0</div>
+<div id="topUI">
+    <div id="score">分數：0</div>
+    <div id="level">關卡：1</div>
+</div>
+
+<div id="skills">
+    <button class="skillBtn" onclick="useBomb()">
+        💉 疫苗炸彈
+    </button>
+
+    <button class="skillBtn" onclick="cleanVirus()">
+        🧼 全面消毒
+    </button>
+</div>
 
 <div id="game"></div>
 
@@ -104,258 +207,307 @@ h1{
     消除健康道具，學習防疫知識！
 </div>
 
+<div id="combo"></div>
+
 <script>
 
-const game = document.getElementById("game");
-const scoreBoard = document.getElementById("scoreBoard");
-const tipBox = document.getElementById("tip");
+const size=8;
 
-const icons = ["🦠","😷","🧼","💉","🥦"];
+const icons=["🦠","😷","🧼","💉","🥦"];
 
-const tips = [
-"勤洗手可以降低病毒傳播風險！",
-"戴口罩能保護自己與他人！",
+const tips=[
+"勤洗手能有效降低感染風險！",
 "均衡飲食有助提升免疫力！",
-"接種疫苗可以降低重症風險！",
-"保持運動與睡眠有助健康！"
+"接種疫苗可降低重症機率！",
+"規律運動能提升身體防護力！",
+"戴口罩可降低飛沫傳播！"
 ];
 
-const size = 8;
-let board = [];
-let score = 0;
+const levelTargets=[500,1200,2500];
 
-let selected = null;
+let board=[];
+let score=0;
+let level=1;
+let combo=0;
+
+let selected=null;
+
+const game=document.getElementById("game");
 
 function randomIcon(){
     return icons[Math.floor(Math.random()*icons.length)];
 }
 
-function createBoard(){
+function init(){
 
-    board = [];
+    board=[];
 
-    for(let row=0; row<size; row++){
+    for(let r=0;r<size;r++){
 
-        let currentRow=[];
+        let row=[];
 
-        for(let col=0; col<size; col++){
-            currentRow.push(randomIcon());
+        for(let c=0;c<size;c++){
+
+            row.push(randomIcon());
         }
 
-        board.push(currentRow);
+        board.push(row);
     }
 
-    drawBoard();
+    render();
 }
 
-function drawBoard(){
+function render(){
 
     game.innerHTML="";
 
-    for(let row=0; row<size; row++){
+    for(let r=0;r<size;r++){
 
-        for(let col=0; col<size; col++){
+        for(let c=0;c<size;c++){
 
             const cell=document.createElement("div");
 
-            cell.classList.add("cell");
+            cell.className="cell fall";
 
-            cell.textContent=board[row][col];
+            cell.innerText=board[r][c];
 
-            cell.dataset.row=row;
-            cell.dataset.col=col;
+            cell.dataset.row=r;
+            cell.dataset.col=c;
 
-            cell.addEventListener("click",cellClick);
+            cell.onclick=clickCell;
 
             game.appendChild(cell);
         }
     }
 }
 
-function cellClick(){
+function clickCell(){
 
-    const row=parseInt(this.dataset.row);
-    const col=parseInt(this.dataset.col);
+    const r=parseInt(this.dataset.row);
+    const c=parseInt(this.dataset.col);
 
     if(!selected){
 
-        selected={row,col};
+        selected={r,c};
 
         this.classList.add("selected");
 
     }else{
 
-        const first=document.querySelector(".selected");
+        const dist=
+            Math.abs(selected.r-r)+
+            Math.abs(selected.c-c);
 
-        const distance=
-            Math.abs(selected.row-row)+
-            Math.abs(selected.col-col);
+        if(dist===1){
 
-        if(distance===1){
+            swap(selected.r,selected.c,r,c);
 
-            swap(selected.row,selected.col,row,col);
+            if(findMatches().length>0){
 
-            if(checkMatches()){
-
-                processMatches();
+                process();
 
             }else{
 
-                swap(selected.row,selected.col,row,col);
+                swap(selected.r,selected.c,r,c);
             }
         }
 
         selected=null;
 
-        if(first) first.classList.remove("selected");
-
-        drawBoard();
+        render();
     }
 }
 
 function swap(r1,c1,r2,c2){
 
-    let temp=board[r1][c1];
+    let t=board[r1][c1];
 
     board[r1][c1]=board[r2][c2];
 
-    board[r2][c2]=temp;
+    board[r2][c2]=t;
 }
 
-function checkMatches(){
-
-    for(let row=0; row<size; row++){
-
-        for(let col=0; col<size-2; col++){
-
-            let icon=board[row][col];
-
-            if(
-                icon &&
-                icon===board[row][col+1] &&
-                icon===board[row][col+2]
-            ){
-                return true;
-            }
-        }
-    }
-
-    for(let col=0; col<size; col++){
-
-        for(let row=0; row<size-2; row++){
-
-            let icon=board[row][col];
-
-            if(
-                icon &&
-                icon===board[row+1][col] &&
-                icon===board[row+2][col]
-            ){
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-function processMatches(){
+function findMatches(){
 
     let matched=[];
 
-    for(let row=0; row<size; row++){
+    for(let r=0;r<size;r++){
 
-        for(let col=0; col<size-2; col++){
+        for(let c=0;c<size-2;c++){
 
-            let icon=board[row][col];
+            let a=board[r][c];
 
             if(
-                icon &&
-                icon===board[row][col+1] &&
-                icon===board[row][col+2]
+                a &&
+                a===board[r][c+1] &&
+                a===board[r][c+2]
             ){
 
-                matched.push([row,col]);
-                matched.push([row,col+1]);
-                matched.push([row,col+2]);
+                matched.push([r,c],[r,c+1],[r,c+2]);
             }
         }
     }
 
-    for(let col=0; col<size; col++){
+    for(let c=0;c<size;c++){
 
-        for(let row=0; row<size-2; row++){
+        for(let r=0;r<size-2;r++){
 
-            let icon=board[row][col];
+            let a=board[r][c];
 
             if(
-                icon &&
-                icon===board[row+1][col] &&
-                icon===board[row+2][col]
+                a &&
+                a===board[r+1][c] &&
+                a===board[r+2][c]
             ){
 
-                matched.push([row,col]);
-                matched.push([row+1,col]);
-                matched.push([row+2,col]);
+                matched.push([r,c],[r+1,c],[r+2,c]);
             }
         }
     }
 
-    matched.forEach(pos=>{
+    return matched;
+}
 
-        let r=pos[0];
-        let c=pos[1];
+function process(){
 
-        board[r][c]=null;
+    let matched=findMatches();
+
+    if(matched.length===0){
+
+        combo=0;
+        return;
+    }
+
+    combo++;
+
+    showCombo(combo);
+
+    matched.forEach(p=>{
+
+        board[p[0]][p[1]]=null;
     });
 
-    score+=matched.length*10;
+    score+=matched.length*10*combo;
 
-    scoreBoard.textContent="分數："+score;
+    updateUI();
 
-    tipBox.textContent=
+    document.getElementById("tip").innerText=
         tips[Math.floor(Math.random()*tips.length)];
 
-    dropTiles();
-
     setTimeout(()=>{
-        drawBoard();
 
-        if(checkMatches()){
+        dropTiles();
 
-            processMatches();
-        }
+        render();
 
-    },200);
+        setTimeout(process,300);
+
+    },250);
 }
 
 function dropTiles(){
 
-    for(let col=0; col<size; col++){
+    for(let c=0;c<size;c++){
 
-        let column=[];
+        let arr=[];
 
-        for(let row=size-1; row>=0; row--){
+        for(let r=size-1;r>=0;r--){
 
-            if(board[row][col]){
+            if(board[r][c]!=null){
 
-                column.push(board[row][col]);
+                arr.push(board[r][c]);
             }
         }
 
-        while(column.length<size){
+        while(arr.length<size){
 
-            column.push(randomIcon());
+            arr.push(randomIcon());
         }
 
-        for(let row=size-1; row>=0; row--){
+        for(let r=size-1;r>=0;r--){
 
-            board[row][col]=column[size-1-row];
+            board[r][c]=arr[size-1-r];
         }
     }
 }
 
-createBoard();
+function updateUI(){
+
+    document.getElementById("score").innerText=
+        "分數："+score;
+
+    if(
+        level<4 &&
+        score>=levelTargets[level-1]
+    ){
+
+        level++;
+
+        document.getElementById("level").innerText=
+            "關卡："+level;
+
+        alert("🎉 進入第 "+level+" 關！");
+    }
+}
+
+function showCombo(num){
+
+    const comboDiv=document.getElementById("combo");
+
+    comboDiv.innerText=num+" COMBO!";
+
+    comboDiv.classList.remove("showCombo");
+
+    void comboDiv.offsetWidth;
+
+    comboDiv.classList.add("showCombo");
+}
+
+function useBomb(){
+
+    let r=Math.floor(Math.random()*size);
+    let c=Math.floor(Math.random()*size);
+
+    for(let rr=r-1;rr<=r+1;rr++){
+
+        for(let cc=c-1;cc<=c+1;cc++){
+
+            if(
+                rr>=0 &&
+                rr<size &&
+                cc>=0 &&
+                cc<size
+            ){
+
+                board[rr][cc]=null;
+            }
+        }
+    }
+
+    dropTiles();
+
+    render();
+}
+
+function cleanVirus(){
+
+    for(let r=0;r<size;r++){
+
+        for(let c=0;c<size;c++){
+
+            if(board[r][c]=="🦠"){
+
+                board[r][c]=null;
+            }
+        }
+    }
+
+    dropTiles();
+
+    render();
+}
+
+init();
 
 </script>
 
