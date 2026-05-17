@@ -2,249 +2,362 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>營養衝線：均衡人生 - 成人背後視角版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健康防衛消消樂</title>
+
 <style>
-    body { margin:0; font-family: 'Microsoft JhengHei', Arial; background: #0f172a; color: #fff; text-align:center; }
-    canvas { border: 3px solid #22d3ee; border-radius: 12px; background: #111; }
-    #ui { position: absolute; top: 15px; left: 15px; font-size: 18px; background: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 8px; }
-    #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15,23,42,0.95); padding: 30px; border-radius: 15px; width: 80%; max-width: 620px; display: none; }
+body{
+    margin:0;
+    background:linear-gradient(180deg,#dff6ff,#ffffff);
+    font-family:"Microsoft JhengHei",sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+}
+
+h1{
+    margin-top:20px;
+    color:#1565c0;
+    text-shadow:2px 2px 4px rgba(0,0,0,0.2);
+}
+
+#game{
+    margin-top:20px;
+    display:grid;
+    grid-template-columns:repeat(8,70px);
+    grid-template-rows:repeat(8,70px);
+    gap:5px;
+    background:#90caf9;
+    padding:10px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
+.cell{
+    width:70px;
+    height:70px;
+    background:white;
+    border-radius:15px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:38px;
+    cursor:pointer;
+    transition:0.2s;
+    user-select:none;
+}
+
+.cell:hover{
+    transform:scale(1.08);
+    background:#e3f2fd;
+}
+
+.selected{
+    outline:4px solid #ff9800;
+}
+
+#scoreBoard{
+    margin-top:20px;
+    font-size:24px;
+    color:#0d47a1;
+    font-weight:bold;
+}
+
+#tip{
+    margin-top:15px;
+    width:80%;
+    max-width:700px;
+    background:white;
+    padding:15px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    color:#333;
+    font-size:18px;
+    text-align:center;
+}
+
+@media(max-width:700px){
+    #game{
+        grid-template-columns:repeat(8,40px);
+        grid-template-rows:repeat(8,40px);
+    }
+
+    .cell{
+        width:40px;
+        height:40px;
+        font-size:24px;
+    }
+}
 </style>
 </head>
+
 <body>
 
-<h1>🏃‍♂️ 營養衝線：均衡人生 🏃‍♀️</h1>
-<div id="ui">
-    距離: <span id="distance">0</span> 公尺　|　
-    分數: <span id="score">0</span>　|　
-    均衡指數: <span id="balance">100</span>%　|　
-    體力: <span id="energy">100</span>
-</div>
+<h1>🩺 健康防衛消消樂 🩺</h1>
 
-<canvas id="canvas" width="800" height="600"></canvas>
+<div id="scoreBoard">分數：0</div>
 
-<div id="gameOver">
-    <h2>遊戲結束！你的均衡人生跑了多遠？</h2>
-    <p id="finalScore"></p>
-    <div id="nutritionReport"></div>
-    <button onclick="restart()" style="padding:12px 30px; font-size:18px; margin-top:15px;">重新挑戰</button>
+<div id="game"></div>
+
+<div id="tip">
+    消除健康道具，學習防疫知識！
 </div>
 
 <script>
-// ==================== 遊戲設定 ====================
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
 
-let gameRunning = true;
-let distance = 0;
+const game = document.getElementById("game");
+const scoreBoard = document.getElementById("scoreBoard");
+const tipBox = document.getElementById("tip");
+
+const icons = ["🦠","😷","🧼","💉","🥦"];
+
+const tips = [
+"勤洗手可以降低病毒傳播風險！",
+"戴口罩能保護自己與他人！",
+"均衡飲食有助提升免疫力！",
+"接種疫苗可以降低重症風險！",
+"保持運動與睡眠有助健康！"
+];
+
+const size = 8;
+let board = [];
 let score = 0;
-let balance = 100;
-let energy = 100;
-let speed = 6.5;
-let currentScene = 0;
 
-const lanes = [240, 400, 560]; // 三條跑道 X 座標
-let currentLane = 1;
+let selected = null;
 
-let playerY = 380;
-let frame = 0;
-let items = [];
-let obstacles = [];
+function randomIcon(){
+    return icons[Math.floor(Math.random()*icons.length)];
+}
 
-// 場景定義（加強視覺）
-const scenes = [
-    {name: "城市街道", bgTop: "#1e2937", bgBottom: "#334155", decor: "city"},
-    {name: "超市通道", bgTop: "#6b21a8", bgBottom: "#7e22ce", decor: "supermarket"},
-    {name: "健康農場", bgTop: "#166534", bgBottom: "#4ade80", decor: "farm"},
-    {name: "身體循環", bgTop: "#9f1239", bgBottom: "#e11d48", decor: "body"}
-];
+function createBoard(){
 
-// 食物資料
-const foodDB = [
-    {emoji:"🥬", type:"healthy", score:15, balance:8, energy:5},
-    {emoji:"🍎", type:"healthy", score:12, balance:7, energy:6},
-    {emoji:"🐟", type:"healthy", score:20, balance:10, energy:12},
-    {emoji:"🥜", type:"healthy", score:14, balance:6, energy:10},
-    {emoji:"🧋", type:"junk", score:-25, balance:-18, energy:-30},
-    {emoji:"🍟", type:"junk", score:-18, balance:-15, energy:-22},
-    {emoji:"🍩", type:"junk", score:-15, balance:-12, energy:-18}
-];
+    board = [];
 
-let keys = {};
+    for(let row=0; row<size; row++){
 
-// ==================== 控制 ====================
-window.addEventListener('keydown', e => {
-    keys[e.key] = true;
-    if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
-    if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
-});
+        let currentRow=[];
 
-function jump() {
-    if (playerY === 380) {
-        playerY = 300;
-        setTimeout(() => { if (gameRunning) playerY = 380; }, 380);
+        for(let col=0; col<size; col++){
+            currentRow.push(randomIcon());
+        }
+
+        board.push(currentRow);
+    }
+
+    drawBoard();
+}
+
+function drawBoard(){
+
+    game.innerHTML="";
+
+    for(let row=0; row<size; row++){
+
+        for(let col=0; col<size; col++){
+
+            const cell=document.createElement("div");
+
+            cell.classList.add("cell");
+
+            cell.textContent=board[row][col];
+
+            cell.dataset.row=row;
+            cell.dataset.col=col;
+
+            cell.addEventListener("click",cellClick);
+
+            game.appendChild(cell);
+        }
     }
 }
 
-// ==================== 繪製背景 ====================
-function drawBackground(scene) {
-    // 天空漸層
-    let grad = ctx.createLinearGradient(0, 0, 0, 480);
-    grad.addColorStop(0, scene.bgTop);
-    grad.addColorStop(1, scene.bgBottom);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, 480);
+function cellClick(){
 
-    // 場景裝飾
-    ctx.font = "40px Arial";
-    if (scene.decor === "city") {
-        ctx.fillText("🏢", 80, 180);
-        ctx.fillText("🏢", 620, 140);
-        ctx.fillText("🌆", 350, 120);
-    } else if (scene.decor === "supermarket") {
-        ctx.fillText("🛒", 120, 160);
-        ctx.fillText("📦", 280, 200);
-        ctx.fillText("🛒", 550, 150);
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
-        ctx.fillRect(100, 280, 600, 8); // 貨架
-    } else if (scene.decor === "farm") {
-        ctx.fillText("🌾", 100, 180);
-        ctx.fillText("🐄", 650, 190);
+    const row=parseInt(this.dataset.row);
+    const col=parseInt(this.dataset.col);
+
+    if(!selected){
+
+        selected={row,col};
+
+        this.classList.add("selected");
+
+    }else{
+
+        const first=document.querySelector(".selected");
+
+        const distance=
+            Math.abs(selected.row-row)+
+            Math.abs(selected.col-col);
+
+        if(distance===1){
+
+            swap(selected.row,selected.col,row,col);
+
+            if(checkMatches()){
+
+                processMatches();
+
+            }else{
+
+                swap(selected.row,selected.col,row,col);
+            }
+        }
+
+        selected=null;
+
+        if(first) first.classList.remove("selected");
+
+        drawBoard();
     }
-
-    // 地面
-    ctx.fillStyle = "#1f2937";
-    ctx.fillRect(0, 480, canvas.width, 120);
-
-    // 道路分隔線（虛線，更自然）
-    ctx.strokeStyle = "#facc15";
-    ctx.lineWidth = 8;
-    ctx.setLineDash([40, 25]);
-    for (let i = 1; i < 3; i++) {
-        ctx.beginPath();
-        ctx.moveTo(lanes[i]-2, 480);
-        ctx.lineTo(lanes[i]-2, 600);
-        ctx.stroke();
-    }
-    ctx.setLineDash([]);
 }
 
-// ==================== 主遊戲迴圈 ====================
-function gameLoop() {
-    if (!gameRunning) return;
-    frame++;
-    distance += Math.floor(speed / 3);
+function swap(r1,c1,r2,c2){
 
-    // 場景切換
-    if (distance > (currentScene + 1) * 850) {
-        currentScene = Math.min(scenes.length - 1, currentScene + 1);
-        speed += 0.4;   // 修正：速度增加變慢
-    }
+    let temp=board[r1][c1];
 
-    const scene = scenes[currentScene];
+    board[r1][c1]=board[r2][c2];
 
-    drawBackground(scene);
+    board[r2][c2]=temp;
+}
 
-    // 玩家
-    ctx.font = "75px Arial";
-    ctx.fillText("🏃", lanes[currentLane] - 35, playerY + 55);
+function checkMatches(){
 
-    // 生成物品與障礙
-    if (frame % Math.max(32, 48 - Math.floor(distance/400)) === 0) {
-        const isObstacle = Math.random() < (0.32 + currentScene * 0.07);
-        
-        if (isObstacle) {
-            obstacles.push({ x: lanes[Math.floor(Math.random()*3)], y: -40, emoji: "🚧" });
-        } else {
-            items.push({
-                x: lanes[Math.floor(Math.random()*3)],
-                y: -50,
-                ...foodDB[Math.floor(Math.random() * foodDB.length)]
-            });
+    for(let row=0; row<size; row++){
+
+        for(let col=0; col<size-2; col++){
+
+            let icon=board[row][col];
+
+            if(
+                icon &&
+                icon===board[row][col+1] &&
+                icon===board[row][col+2]
+            ){
+                return true;
+            }
         }
     }
 
-    // 更新物品
-    for (let i = items.length-1; i >= 0; i--) {
-        let it = items[i];
-        it.y += speed;
-        ctx.font = "48px Arial";
-        ctx.fillText(it.emoji, it.x - 24, it.y);
+    for(let col=0; col<size; col++){
 
-        if (Math.abs(it.x - lanes[currentLane]) < 48 && Math.abs(it.y - playerY) < 65) {
-            score += it.score;
-            balance = Math.max(10, Math.min(100, balance + it.balance));
-            energy = Math.max(5, Math.min(100, energy + it.energy));
-            items.splice(i, 1);
+        for(let row=0; row<size-2; row++){
+
+            let icon=board[row][col];
+
+            if(
+                icon &&
+                icon===board[row+1][col] &&
+                icon===board[row+2][col]
+            ){
+                return true;
+            }
         }
-        if (it.y > 650) items.splice(i,1);
     }
 
-    // 更新障礙
-    for (let i = obstacles.length-1; i >= 0; i--) {
-        let ob = obstacles[i];
-        ob.y += speed * 1.05;
-        ctx.font = "52px Arial";
-        ctx.fillText(ob.emoji, ob.x - 28, ob.y);
-
-        if (Math.abs(ob.x - lanes[currentLane]) < 45 && Math.abs(ob.y - playerY) < 70) {
-            energy -= 32;
-            obstacles.splice(i,1);
-        }
-        if (ob.y > 650) obstacles.splice(i,1);
-    }
-
-    // UI
-    document.getElementById('distance').textContent = distance;
-    document.getElementById('score').textContent = score;
-    document.getElementById('balance').textContent = Math.floor(balance);
-    document.getElementById('energy').textContent = Math.floor(energy);
-
-    // 消耗
-    if (frame % 45 === 0) {
-        energy -= (0.55 + currentScene * 0.25);
-        if (balance < 50) energy -= 0.9;
-    }
-
-    if (energy <= 12 || balance <= 12) {
-        gameOver();
-        return;
-    }
-
-    requestAnimationFrame(gameLoop);
+    return false;
 }
 
-// ==================== 遊戲結束 ====================
-function gameOver() {
-    gameRunning = false;
-    let comment = balance >= 78 ? "🎉 非常優秀的均衡飲食習慣！" :
-                  balance >= 60 ? "👍 整體不錯，還有進步空間。" :
-                  "⚠️ 建議調整飲食習慣，減少精緻糖與油脂。";
+function processMatches(){
 
-    document.getElementById('finalScore').innerHTML = `最終距離：${distance} 公尺 | 總分：${score}`;
-    document.getElementById('nutritionReport').innerHTML = `
-        <p><strong>均衡指數：${Math.floor(balance)}%　${comment}</strong></p>
-        <p style="font-size:15px; line-height:1.7;">
-            💡 衛教提醒：均衡飲食是預防慢性病最有效的武器<br>
-            建議遵循「我的餐盤」原則，守護長期健康。
-        </p>
-    `;
-    document.getElementById('gameOver').style.display = 'block';
+    let matched=[];
+
+    for(let row=0; row<size; row++){
+
+        for(let col=0; col<size-2; col++){
+
+            let icon=board[row][col];
+
+            if(
+                icon &&
+                icon===board[row][col+1] &&
+                icon===board[row][col+2]
+            ){
+
+                matched.push([row,col]);
+                matched.push([row,col+1]);
+                matched.push([row,col+2]);
+            }
+        }
+    }
+
+    for(let col=0; col<size; col++){
+
+        for(let row=0; row<size-2; row++){
+
+            let icon=board[row][col];
+
+            if(
+                icon &&
+                icon===board[row+1][col] &&
+                icon===board[row+2][col]
+            ){
+
+                matched.push([row,col]);
+                matched.push([row+1,col]);
+                matched.push([row+2,col]);
+            }
+        }
+    }
+
+    matched.forEach(pos=>{
+
+        let r=pos[0];
+        let c=pos[1];
+
+        board[r][c]=null;
+    });
+
+    score+=matched.length*10;
+
+    scoreBoard.textContent="分數："+score;
+
+    tipBox.textContent=
+        tips[Math.floor(Math.random()*tips.length)];
+
+    dropTiles();
+
+    setTimeout(()=>{
+        drawBoard();
+
+        if(checkMatches()){
+
+            processMatches();
+        }
+
+    },200);
 }
 
-function restart() { location.reload(); }
+function dropTiles(){
 
-// 跳躍控制
-document.addEventListener('keydown', e => {
-    if (e.key === ' ' || e.key === 'Spacebar') jump();
-});
+    for(let col=0; col<size; col++){
 
-gameLoop();
+        let column=[];
+
+        for(let row=size-1; row>=0; row--){
+
+            if(board[row][col]){
+
+                column.push(board[row][col]);
+            }
+        }
+
+        while(column.length<size){
+
+            column.push(randomIcon());
+        }
+
+        for(let row=size-1; row>=0; row--){
+
+            board[row][col]=column[size-1-row];
+        }
+    }
+}
+
+createBoard();
+
 </script>
-
-<p style="margin-top:20px; color:#94a3b8;">
-    操作方式：← → 方向鍵（或 A / D）切換跑道　｜　空白鍵 跳躍<br>
-    收集健康食物，避開垃圾食物，維持均衡指數與體力！
-</p>
 
 </body>
 </html>
