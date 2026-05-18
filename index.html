@@ -1,121 +1,145 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>熱量地雷 Calories Sweeper</title>
 
 <style>
-    *{
-        box-sizing:border-box;
-        font-family:"Microsoft JhengHei",sans-serif;
-    }
 
-    body{
-        margin:0;
-        background:#dff6f0;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        min-height:100vh;
-    }
+*{
+    box-sizing:border-box;
+    font-family:"Microsoft JhengHei",sans-serif;
+}
 
-    .game-container{
-        background:white;
-        padding:20px;
-        border-radius:20px;
-        box-shadow:0 10px 30px rgba(0,0,0,0.15);
-        width:420px;
-    }
+body{
+    margin:0;
+    background:#dff6f0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
 
-    h1{
-        text-align:center;
-        margin-top:0;
-        color:#2c7a7b;
-    }
+.game-container{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.15);
+    width:520px;
+}
 
-    .top-bar{
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        background:#f4f4f4;
-        padding:12px;
-        border-radius:12px;
-        margin-bottom:15px;
-        font-size:18px;
-        font-weight:bold;
-    }
+h1{
+    text-align:center;
+    color:#2c7a7b;
+}
 
-    .health{
-        color:#2f855a;
-    }
+.level-select{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-bottom:15px;
+}
 
-    .danger-count{
-        color:#e53e3e;
-    }
+.level-btn{
+    padding:10px 15px;
+    border:none;
+    border-radius:10px;
+    background:#4fd1c5;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+}
 
-    .board{
-        display:grid;
-        grid-template-columns:repeat(8, 45px);
-        gap:5px;
-        justify-content:center;
-    }
+.level-btn:hover{
+    background:#38b2ac;
+}
 
-    .cell{
-        width:45px;
-        height:45px;
-        background:#b2f5ea;
-        border-radius:10px;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        font-weight:bold;
-        font-size:18px;
-        cursor:pointer;
-        user-select:none;
-        transition:0.2s;
-    }
+.top-bar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#f4f4f4;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:15px;
+    font-size:18px;
+    font-weight:bold;
+}
 
-    .cell:hover{
-        transform:scale(1.05);
-    }
+.board{
+    display:grid;
+    gap:5px;
+    justify-content:center;
+}
 
-    .revealed{
-        background:#edf2f7;
-    }
+.cell{
+    width:50px;
+    height:50px;
+    background:#b2f5ea;
+    border-radius:10px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
+    user-select:none;
+    font-weight:bold;
+    font-size:20px;
+    transition:0.15s;
+}
 
-    .mine{
-        background:#fc8181;
-        color:white;
-    }
+.cell:hover{
+    transform:scale(1.05);
+}
 
-    .healthy{
-        background:#c6f6d5;
-    }
+.revealed{
+    background:#edf2f7;
+}
 
-    .message{
-        margin-top:15px;
-        text-align:center;
-        font-size:16px;
-        min-height:40px;
-        color:#444;
-    }
+.mine{
+    background:#fc8181;
+    color:white;
+}
 
-    .restart{
-        margin-top:15px;
-        width:100%;
-        padding:12px;
-        border:none;
-        border-radius:12px;
-        background:#38b2ac;
-        color:white;
-        font-size:16px;
-        cursor:pointer;
-    }
+.safe{
+    background:#c6f6d5;
+}
 
-    .restart:hover{
-        background:#319795;
-    }
+.flag{
+    background:#f6ad55;
+}
+
+.message{
+    margin-top:15px;
+    min-height:40px;
+    text-align:center;
+    font-size:16px;
+    color:#444;
+}
+
+.restart{
+    width:100%;
+    margin-top:15px;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    background:#38b2ac;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.restart:hover{
+    background:#319795;
+}
+
+.note{
+    text-align:center;
+    margin-top:10px;
+    color:#666;
+    font-size:14px;
+}
 
 </style>
 </head>
@@ -126,68 +150,105 @@
 
     <h1>🍔 熱量地雷</h1>
 
+    <div class="level-select">
+
+        <button class="level-btn" onclick="setLevel(4,2)">
+            初級 4x4
+        </button>
+
+        <button class="level-btn" onclick="setLevel(6,6)">
+            中級 6x6
+        </button>
+
+        <button class="level-btn" onclick="setLevel(8,10)">
+            高級 8x8
+        </button>
+
+    </div>
+
     <div class="top-bar">
-        <div class="danger-count">
-            飲食地雷：<span id="mineCount"></span>
+
+        <div>
+            🚩 旗子：<span id="flagCount">0</span>
         </div>
 
-        <div class="health">
-            健康值：<span id="health">100</span>
+        <div>
+            ❤️ 健康值：<span id="health">100</span>
         </div>
+
     </div>
 
     <div class="board" id="board"></div>
 
     <div class="message" id="message">
-        避開高熱量食物！
+        左鍵開格子，右鍵插旗 🚩
     </div>
 
     <button class="restart" onclick="startGame()">
         重新開始
     </button>
 
+    <div class="note">
+        避開高熱量食物，維持健康飲食！
+    </div>
+
 </div>
 
 <script>
 
-const size = 8;
-const mineTotal = 10;
+let size = 4;
+let mineTotal = 2;
 
 let board = [];
-let health = 100;
 let gameOver = false;
+let health = 100;
+let flags = 0;
 
-const unhealthyFoods = [
-    "🍟",
+const foods = [
     "🍔",
+    "🍟",
     "🧋",
-    "🍰",
     "🍩",
+    "🍰",
     "🍗"
 ];
 
-const healthTips = [
-    "含糖飲料容易造成熱量超標",
+const tips = [
+    "少喝含糖飲料更健康",
     "炸物脂肪含量偏高",
-    "甜食容易增加糖分攝取",
-    "多喝水比含糖飲料更健康",
-    "均衡飲食有助於維持健康"
+    "均衡飲食很重要",
+    "多吃蔬果有助健康",
+    "避免高熱量宵夜"
 ];
+
+function setLevel(newSize, mines){
+
+    size = newSize;
+    mineTotal = mines;
+
+    startGame();
+}
 
 function startGame(){
 
     board = [];
     gameOver = false;
     health = 100;
+    flags = 0;
 
     document.getElementById("health").innerText = health;
-    document.getElementById("mineCount").innerText = mineTotal;
-    document.getElementById("message").innerText = "避開高熱量食物！";
+    document.getElementById("flagCount").innerText = flags;
+    document.getElementById("message").innerText =
+        "左鍵開格子，右鍵插旗 🚩";
 
     const boardElement = document.getElementById("board");
+
     boardElement.innerHTML = "";
 
-    // 建立空白棋盤
+    boardElement.style.gridTemplateColumns =
+        `repeat(${size}, 50px)`;
+
+    // 建立棋盤
     for(let row=0; row<size; row++){
 
         board[row] = [];
@@ -197,15 +258,16 @@ function startGame(){
             board[row][col] = {
                 mine:false,
                 revealed:false,
+                flagged:false,
                 count:0
             };
         }
     }
 
-    // 放置地雷
-    let minesPlaced = 0;
+    // 放地雷
+    let placed = 0;
 
-    while(minesPlaced < mineTotal){
+    while(placed < mineTotal){
 
         let r = Math.floor(Math.random()*size);
         let c = Math.floor(Math.random()*size);
@@ -213,7 +275,7 @@ function startGame(){
         if(!board[r][c].mine){
 
             board[r][c].mine = true;
-            minesPlaced++;
+            placed++;
         }
     }
 
@@ -261,7 +323,11 @@ function startGame(){
             cell.dataset.row = row;
             cell.dataset.col = col;
 
+            // 左鍵
             cell.addEventListener("click", revealCell);
+
+            // 右鍵插旗
+            cell.addEventListener("contextmenu", toggleFlag);
 
             boardElement.appendChild(cell);
         }
@@ -275,44 +341,36 @@ function revealCell(){
     const row = this.dataset.row;
     const col = this.dataset.col;
 
-    const cellData = board[row][col];
+    const data = board[row][col];
 
-    if(cellData.revealed) return;
+    if(data.revealed || data.flagged) return;
 
-    cellData.revealed = true;
+    data.revealed = true;
 
     this.classList.add("revealed");
 
     // 踩到地雷
-    if(cellData.mine){
+    if(data.mine){
 
         this.classList.add("mine");
 
-        const randomFood =
-            unhealthyFoods[
-                Math.floor(Math.random()*unhealthyFoods.length)
-            ];
+        this.innerText =
+            foods[Math.floor(Math.random()*foods.length)];
 
-        this.innerText = randomFood;
-
-        health -= 20;
+        health -= 25;
 
         document.getElementById("health").innerText = health;
 
-        const randomTip =
-            healthTips[
-                Math.floor(Math.random()*healthTips.length)
-            ];
-
         document.getElementById("message").innerText =
-            "⚠️ " + randomTip;
+            "⚠️ " +
+            tips[Math.floor(Math.random()*tips.length)];
 
         if(health <= 0){
 
             gameOver = true;
 
             document.getElementById("message").innerText =
-                "💀 健康值歸零！少吃垃圾食物！";
+                "💀 健康值歸零！";
 
             revealAllMines();
         }
@@ -321,11 +379,11 @@ function revealCell(){
     }
 
     // 安全格
-    this.classList.add("healthy");
+    this.classList.add("safe");
 
-    if(cellData.count > 0){
+    if(data.count > 0){
 
-        this.innerText = cellData.count;
+        this.innerText = data.count;
 
     }else{
 
@@ -335,6 +393,37 @@ function revealCell(){
     }
 
     checkWin();
+}
+
+function toggleFlag(e){
+
+    e.preventDefault();
+
+    if(gameOver) return;
+
+    const row = this.dataset.row;
+    const col = this.dataset.col;
+
+    const data = board[row][col];
+
+    if(data.revealed) return;
+
+    data.flagged = !data.flagged;
+
+    if(data.flagged){
+
+        this.innerText = "🚩";
+        this.classList.add("flag");
+        flags++;
+
+    }else{
+
+        this.innerText = "";
+        this.classList.remove("flag");
+        flags--;
+    }
+
+    document.getElementById("flagCount").innerText = flags;
 }
 
 function revealNearby(row, col){
@@ -358,9 +447,9 @@ function revealNearby(row, col){
                 const cellElement =
                     document.getElementsByClassName("cell")[index];
 
-                const cellData = board[nr][nc];
+                const data = board[nr][nc];
 
-                if(!cellData.revealed && !cellData.mine){
+                if(!data.revealed && !data.mine){
 
                     cellElement.click();
                 }
@@ -384,9 +473,7 @@ function revealAllMines(){
                 cells[index].classList.add("mine");
 
                 cells[index].innerText =
-                    unhealthyFoods[
-                        Math.floor(Math.random()*unhealthyFoods.length)
-                    ];
+                    foods[Math.floor(Math.random()*foods.length)];
             }
         }
     }
@@ -394,7 +481,7 @@ function revealAllMines(){
 
 function checkWin(){
 
-    let safeCells = 0;
+    let safe = 0;
 
     for(let row=0; row<size; row++){
 
@@ -404,17 +491,17 @@ function checkWin(){
                 !board[row][col].mine &&
                 board[row][col].revealed
             ){
-                safeCells++;
+                safe++;
             }
         }
     }
 
-    if(safeCells === (size*size - mineTotal)){
+    if(safe === (size * size - mineTotal)){
 
         gameOver = true;
 
         document.getElementById("message").innerText =
-            "🎉 今日健康飲食達成！";
+            "🎉 健康飲食成功！";
     }
 }
 
