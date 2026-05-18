@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,84 +23,60 @@ body{
     justify-content:center;
     align-items:center;
 
+    overflow:hidden;
+
     background:
     linear-gradient(
-        135deg,
-        #7dd3fc,
-        #99f6e4
-    );
+        rgba(0,0,0,0.35),
+        rgba(0,0,0,0.35)
+    ),
+    url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1600&auto=format&fit=crop");
 
-    overflow:hidden;
+    background-size:cover;
+    background-position:center;
 }
 
-/* 背景泡泡 */
+/* 夜市燈光 */
 
-.bubble{
+body::before{
+
+    content:"";
 
     position:absolute;
 
-    border-radius:50%;
+    width:100%;
+    height:100%;
 
-    background:rgba(255,255,255,0.2);
+    background:
+    radial-gradient(
+        circle at top,
+        rgba(255,255,255,0.18),
+        transparent 60%
+    );
 
-    animation:float 8s infinite ease-in-out;
+    pointer-events:none;
 }
 
-.bubble1{
-    width:220px;
-    height:220px;
-    top:-60px;
-    left:-60px;
-}
-
-.bubble2{
-    width:140px;
-    height:140px;
-    right:50px;
-    bottom:80px;
-}
-
-.bubble3{
-    width:90px;
-    height:90px;
-    right:200px;
-    top:140px;
-}
-
-@keyframes float{
-
-    0%{
-        transform:translateY(0px);
-    }
-
-    50%{
-        transform:translateY(-20px);
-    }
-
-    100%{
-        transform:translateY(0px);
-    }
-}
-
-/* 主容器 */
+/* 主畫面 */
 
 .game-container{
 
-    position:relative;
-    z-index:10;
+    width:1100px;
 
-    width:620px;
+    min-height:780px;
 
     background:rgba(255,255,255,0.92);
 
     backdrop-filter:blur(10px);
 
-    border-radius:30px;
+    border-radius:35px;
 
-    padding:30px;
+    padding:35px;
 
     box-shadow:
-    0 20px 40px rgba(0,0,0,0.15);
+    0 25px 50px rgba(0,0,0,0.35);
+
+    position:relative;
 }
 
 /* 標題 */
@@ -110,24 +85,29 @@ body{
 
     text-align:center;
 
-    margin-bottom:20px;
+    margin-bottom:25px;
 }
 
 .title h1{
 
-    font-size:42px;
+    font-size:58px;
 
-    color:#0f766e;
+    color:#b91c1c;
+
+    text-shadow:
+    0 4px 12px rgba(0,0,0,0.15);
 }
 
 .title p{
 
-    margin-top:8px;
+    margin-top:10px;
 
-    color:#666;
+    color:#555;
+
+    font-size:20px;
 }
 
-/* 關卡按鈕 */
+/* 難度 */
 
 .level-select{
 
@@ -135,66 +115,76 @@ body{
 
     justify-content:center;
 
-    gap:15px;
+    flex-wrap:wrap;
 
-    margin-bottom:25px;
+    gap:18px;
+
+    margin-bottom:30px;
 }
 
 .level-btn{
 
     border:none;
 
-    padding:12px 20px;
+    padding:16px 26px;
 
-    border-radius:14px;
-
-    cursor:pointer;
+    border-radius:18px;
 
     color:white;
 
+    font-size:18px;
+
     font-weight:bold;
 
-    font-size:15px;
+    cursor:pointer;
 
     transition:0.25s;
-
-    box-shadow:
-    0 5px 12px rgba(0,0,0,0.15);
 }
 
 .level-btn:hover{
 
     transform:
-    translateY(-2px)
+    translateY(-4px)
     scale(1.05);
 }
 
 .easy{
-    background:linear-gradient(135deg,#22c55e,#16a34a);
+    background:linear-gradient(135deg,#22c55e,#15803d);
 }
 
 .medium{
-    background:linear-gradient(135deg,#f59e0b,#f97316);
+    background:linear-gradient(135deg,#f59e0b,#ea580c);
 }
 
 .hard{
-    background:linear-gradient(135deg,#ef4444,#dc2626);
+    background:linear-gradient(135deg,#ef4444,#b91c1c);
 }
 
-/* 資訊欄 */
+.hell{
+    background:linear-gradient(135deg,#7f1d1d,#000);
+    box-shadow:0 0 20px rgba(255,0,0,0.4);
+}
+
+/* 上方資訊 */
 
 .top-bar{
 
     display:flex;
 
-    gap:15px;
+    gap:20px;
 
-    margin-bottom:25px;
+    margin-bottom:30px;
 }
 
 .info-card{
 
     flex:1;
+
+    padding:20px;
+
+    border-radius:22px;
+
+    text-align:center;
 
     background:
     linear-gradient(
@@ -203,29 +193,22 @@ body{
         #ecfeff
     );
 
-    border-radius:20px;
-
-    padding:15px;
-
-    text-align:center;
-
     box-shadow:
-    inset 0 2px 0 rgba(255,255,255,0.8),
-    0 5px 12px rgba(0,0,0,0.06);
+    0 8px 16px rgba(0,0,0,0.08);
 }
 
 .info-label{
 
     color:#666;
 
-    font-size:14px;
+    font-size:15px;
 }
 
 .info-value{
 
-    margin-top:8px;
+    margin-top:10px;
 
-    font-size:28px;
+    font-size:34px;
 
     font-weight:bold;
 
@@ -240,31 +223,30 @@ body{
 
     justify-content:center;
 
-    gap:8px;
+    gap:10px;
 
-    margin-bottom:20px;
+    margin-bottom:25px;
 }
 
 /* 格子 */
 
 .cell{
 
-    width:58px;
-    height:58px;
+    width:62px;
+    height:62px;
 
-    border-radius:16px;
+    border-radius:18px;
 
     display:flex;
     justify-content:center;
     align-items:center;
 
+    font-size:28px;
+    font-weight:bold;
+
     cursor:pointer;
 
     user-select:none;
-
-    font-size:24px;
-
-    font-weight:bold;
 
     transition:0.15s;
 
@@ -276,33 +258,26 @@ body{
     );
 
     box-shadow:
-    0 5px 10px rgba(0,0,0,0.08),
+    0 6px 14px rgba(0,0,0,0.1),
     inset 0 2px 0 rgba(255,255,255,0.8);
 }
 
 .cell:hover{
 
     transform:
-    scale(1.06)
+    scale(1.08)
     translateY(-2px);
-
-    box-shadow:
-    0 10px 16px rgba(0,0,0,0.12);
 }
-
-/* 已翻開 */
 
 .revealed{
 
     background:
     linear-gradient(
         145deg,
-        #ffffff,
-        #f0fdfa
+        #fff,
+        #ecfeff
     );
 }
-
-/* 安全格 */
 
 .safe{
 
@@ -313,33 +288,6 @@ body{
         #bbf7d0
     );
 }
-
-/* 地雷 */
-
-.mine{
-
-    background:
-    linear-gradient(
-        145deg,
-        #fb7185,
-        #ef4444
-    );
-
-    color:white;
-
-    animation:shake 0.2s;
-}
-
-@keyframes shake{
-
-    0%{transform:translateX(0);}
-    25%{transform:translateX(-4px);}
-    50%{transform:translateX(4px);}
-    75%{transform:translateX(-4px);}
-    100%{transform:translateX(0);}
-}
-
-/* 旗子 */
 
 .flag{
 
@@ -353,21 +301,48 @@ body{
     color:white;
 }
 
+.mine{
+
+    background:
+    linear-gradient(
+        145deg,
+        #ef4444,
+        #991b1b
+    );
+
+    color:white;
+
+    animation:shake 0.2s;
+}
+
+@keyframes shake{
+
+    0%{transform:translateX(0);}
+    25%{transform:translateX(-5px);}
+    50%{transform:translateX(5px);}
+    75%{transform:translateX(-5px);}
+    100%{transform:translateX(0);}
+}
+
 /* 訊息 */
 
 .message{
 
-    min-height:60px;
+    min-height:70px;
 
     display:flex;
-    align-items:center;
     justify-content:center;
+    align-items:center;
 
-    text-align:center;
+    border-radius:22px;
 
-    border-radius:18px;
+    padding:18px;
 
-    padding:15px;
+    font-size:20px;
+
+    font-weight:bold;
+
+    color:#0f766e;
 
     background:
     linear-gradient(
@@ -376,12 +351,8 @@ body{
         #ecfeff
     );
 
-    color:#0f766e;
-
-    font-weight:bold;
-
     box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.8);
+    inset 0 2px 0 rgba(255,255,255,0.8);
 }
 
 /* 按鈕 */
@@ -390,21 +361,13 @@ body{
 
     width:100%;
 
-    margin-top:20px;
+    margin-top:25px;
 
     border:none;
 
-    padding:15px;
+    padding:18px;
 
-    border-radius:18px;
-
-    font-size:18px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-
-    color:white;
+    border-radius:20px;
 
     background:
     linear-gradient(
@@ -413,15 +376,23 @@ body{
         #14b8a6
     );
 
+    color:white;
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
     transition:0.25s;
 }
 
 .restart:hover{
 
-    transform:translateY(-2px);
+    transform:translateY(-3px);
 
     box-shadow:
-    0 10px 18px rgba(6,182,212,0.3);
+    0 12px 20px rgba(6,182,212,0.35);
 }
 
 /* 底部 */
@@ -434,17 +405,13 @@ body{
 
     color:#666;
 
-    font-size:14px;
+    font-size:15px;
 }
 
 </style>
 </head>
 
 <body>
-
-<div class="bubble bubble1"></div>
-<div class="bubble bubble2"></div>
-<div class="bubble bubble3"></div>
 
 <div class="game-container">
 
@@ -453,34 +420,41 @@ body{
         <h1>🍔 熱量地雷</h1>
 
         <p>
-            避開高熱量食物，打造健康生活
+            夜市誘惑來襲！避開高熱量飲食！
         </p>
 
     </div>
 
-    <!-- 關卡 -->
+    <!-- 難度 -->
 
     <div class="level-select">
 
         <button
             class="level-btn easy"
-            onclick="setLevel(4,2)"
+            onclick="setLevel(4,5,60)"
         >
             初級 4x4
         </button>
 
         <button
             class="level-btn medium"
-            onclick="setLevel(6,6)"
+            onclick="setLevel(6,10,90)"
         >
             中級 6x6
         </button>
 
         <button
             class="level-btn hard"
-            onclick="setLevel(8,10)"
+            onclick="setLevel(8,30,120)"
         >
             高級 8x8
+        </button>
+
+        <button
+            class="level-btn hell"
+            onclick="setLevel(10,50,150)"
+        >
+            💀 地獄夜市模式
         </button>
 
     </div>
@@ -492,7 +466,7 @@ body{
         <div class="info-card">
 
             <div class="info-label">
-                💣 飲食地雷
+                💣 剩餘地雷
             </div>
 
             <div class="info-value" id="mineCount">
@@ -525,6 +499,18 @@ body{
 
         </div>
 
+        <div class="info-card">
+
+            <div class="info-label">
+                ⏱ 剩餘時間
+            </div>
+
+            <div class="info-value" id="timer">
+                60
+            </div>
+
+        </div>
+
     </div>
 
     <!-- 棋盤 -->
@@ -549,7 +535,7 @@ body{
 
     <div class="footer">
 
-        少糖、少油、多運動 💪
+        珍奶、炸雞、甜點正在誘惑你 🍟🧋🍰
 
     </div>
 
@@ -558,23 +544,30 @@ body{
 <script>
 
 let size = 4;
-let mineTotal = 2;
+let mineTotal = 5;
+let timeLimit = 60;
+
+let timer;
+let timeLeft;
 
 let board = [];
 
-let gameOver = false;
+let flags = 0;
 
 let health = 100;
 
-let flags = 0;
+let gameOver = false;
 
 const foods = [
+
     "🍔",
     "🍟",
     "🧋",
     "🍩",
     "🍰",
-    "🍗"
+    "🍗",
+    "🌭",
+    "🍕"
 ];
 
 const tips = [
@@ -585,29 +578,35 @@ const tips = [
 
     "均衡飲食很重要",
 
-    "多吃蔬果有助健康",
+    "避免高熱量宵夜",
 
-    "避免高熱量宵夜"
+    "夜市美食別吃過量"
 ];
 
-function setLevel(newSize,mines){
+function setLevel(newSize,mines,time){
 
     size = newSize;
 
     mineTotal = mines;
+
+    timeLimit = time;
 
     startGame();
 }
 
 function startGame(){
 
+    clearInterval(timer);
+
     board = [];
 
-    gameOver = false;
+    flags = 0;
 
     health = 100;
 
-    flags = 0;
+    gameOver = false;
+
+    timeLeft = timeLimit;
 
     document.getElementById("health").innerText =
         health;
@@ -618,8 +617,13 @@ function startGame(){
     document.getElementById("mineCount").innerText =
         mineTotal - flags;
 
+    document.getElementById("timer").innerText =
+        timeLeft;
+
     document.getElementById("message").innerText =
         "左鍵翻格子，右鍵插旗 🚩";
+
+    startTimer();
 
     const boardElement =
         document.getElementById("board");
@@ -627,7 +631,7 @@ function startGame(){
     boardElement.innerHTML = "";
 
     boardElement.style.gridTemplateColumns =
-        `repeat(${size},58px)`;
+        `repeat(${size},62px)`;
 
     // 建立棋盤
 
@@ -640,11 +644,8 @@ function startGame(){
             board[row][col] = {
 
                 mine:false,
-
                 revealed:false,
-
                 flagged:false,
-
                 count:0
             };
         }
@@ -717,14 +718,10 @@ function startGame(){
 
             cell.dataset.col = col;
 
-            // 左鍵
-
             cell.addEventListener(
                 "click",
                 revealCell
             );
-
-            // 右鍵
 
             cell.addEventListener(
                 "contextmenu",
@@ -734,6 +731,32 @@ function startGame(){
             boardElement.appendChild(cell);
         }
     }
+}
+
+function startTimer(){
+
+    timer = setInterval(()=>{
+
+        if(gameOver) return;
+
+        timeLeft--;
+
+        document.getElementById("timer").innerText =
+            timeLeft;
+
+        if(timeLeft <= 0){
+
+            gameOver = true;
+
+            clearInterval(timer);
+
+            revealAllMines();
+
+            document.getElementById("message").innerText =
+                "⏰ 時間到了！你被夜市誘惑擊敗了！";
+        }
+
+    },1000);
 }
 
 function revealCell(){
@@ -763,7 +786,7 @@ function revealCell(){
                 Math.floor(Math.random()*foods.length)
             ];
 
-        health -= 25;
+        health -= 20;
 
         document.getElementById("health").innerText =
             health;
@@ -778,10 +801,12 @@ function revealCell(){
 
             gameOver = true;
 
-            document.getElementById("message").innerText =
-                "💀 健康值歸零！";
+            clearInterval(timer);
 
             revealAllMines();
+
+            document.getElementById("message").innerText =
+                "💀 健康值歸零！";
         }
 
         return;
@@ -840,8 +865,6 @@ function toggleFlag(e){
 
     document.getElementById("flagCount").innerText =
         flags;
-
-    // 剩餘炸彈數
 
     document.getElementById("mineCount").innerText =
         mineTotal - flags;
@@ -933,6 +956,8 @@ function checkWin(){
     ){
 
         gameOver = true;
+
+        clearInterval(timer);
 
         document.getElementById("message").innerText =
             "🎉 健康飲食成功！";
