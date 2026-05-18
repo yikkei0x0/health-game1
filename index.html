@@ -1,704 +1,424 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>健康防衛消消樂 PRO</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>熱量地雷 Calories Sweeper</title>
 
 <style>
-
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    background:linear-gradient(180deg,#d7f3ff,#ffffff);
-    font-family:"Microsoft JhengHei",sans-serif;
-    overflow-x:hidden;
-}
-
-#topBar{
-    width:1400px;
-    margin:20px auto;
-    display:flex;
-    justify-content:space-between;
-    align-items:flex-start;
-}
-
-#leftPanel{
-    color:#0d47a1;
-}
-
-#leftPanel h1{
-    margin:0 0 15px 0;
-    font-size:42px;
-}
-
-.infoText{
-    font-size:28px;
-    margin-top:10px;
-    font-weight:bold;
-}
-
-#skillPanel{
-    display:flex;
-    gap:20px;
-}
-
-.skillCard{
-    width:280px;
-    background:white;
-    padding:18px;
-    border-radius:18px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.15);
-}
-
-.skillBtn{
-    width:100%;
-    padding:15px;
-    border:none;
-    border-radius:14px;
-    background:#42a5f5;
-    color:white;
-    font-size:24px;
-    font-weight:bold;
-    cursor:pointer;
-    transition:0.25s;
-}
-
-.skillBtn:hover{
-    transform:scale(1.05);
-}
-
-.condition{
-    margin-top:12px;
-    color:#555;
-    line-height:1.7;
-    font-size:18px;
-}
-
-#game{
-    width:960px;
-    height:960px;
-    margin:20px auto;
-    display:grid;
-    grid-template-columns:repeat(8,1fr);
-    grid-template-rows:repeat(8,1fr);
-    gap:8px;
-    background:#90caf9;
-    padding:15px;
-    border-radius:24px;
-    box-shadow:0 12px 35px rgba(0,0,0,0.25);
-}
-
-.cell{
-    background:white;
-    border-radius:18px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:58px;
-    cursor:pointer;
-    user-select:none;
-    position:relative;
-    transition:
-        transform 0.2s,
-        opacity 0.25s;
-}
-
-.cell:hover{
-    transform:scale(1.08);
-}
-
-.selected{
-    outline:6px solid #ff9800;
-}
-
-.destroy{
-    animation:explode 0.35s forwards;
-}
-
-.fall{
-    animation:fallAnim 0.35s;
-}
-
-@keyframes explode{
-
-    0%{
-        transform:scale(1);
-        opacity:1;
+    *{
+        box-sizing:border-box;
+        font-family:"Microsoft JhengHei",sans-serif;
     }
 
-    100%{
-        transform:scale(0);
-        opacity:0;
-    }
-}
-
-@keyframes fallAnim{
-
-    0%{
-        transform:translateY(-60px);
-        opacity:0;
+    body{
+        margin:0;
+        background:#dff6f0;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        min-height:100vh;
     }
 
-    100%{
-        transform:translateY(0);
-        opacity:1;
-    }
-}
-
-#tip{
-    width:1000px;
-    margin:20px auto;
-    background:white;
-    border-radius:18px;
-    padding:20px;
-    text-align:center;
-    font-size:24px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.15);
-}
-
-#combo{
-    position:fixed;
-    top:120px;
-    left:50%;
-    transform:translateX(-50%);
-    font-size:72px;
-    font-weight:bold;
-    color:#ff5722;
-    opacity:0;
-    pointer-events:none;
-}
-
-.showCombo{
-    animation:comboAnim 1s;
-}
-
-@keyframes comboAnim{
-
-    0%{
-        opacity:0;
-        transform:translateX(-50%) scale(0.4);
+    .game-container{
+        background:white;
+        padding:20px;
+        border-radius:20px;
+        box-shadow:0 10px 30px rgba(0,0,0,0.15);
+        width:420px;
     }
 
-    40%{
-        opacity:1;
-        transform:translateX(-50%) scale(1.4);
+    h1{
+        text-align:center;
+        margin-top:0;
+        color:#2c7a7b;
     }
 
-    100%{
-        opacity:0;
-        transform:translateX(-50%) scale(1);
+    .top-bar{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        background:#f4f4f4;
+        padding:12px;
+        border-radius:12px;
+        margin-bottom:15px;
+        font-size:18px;
+        font-weight:bold;
     }
-}
+
+    .health{
+        color:#2f855a;
+    }
+
+    .danger-count{
+        color:#e53e3e;
+    }
+
+    .board{
+        display:grid;
+        grid-template-columns:repeat(8, 45px);
+        gap:5px;
+        justify-content:center;
+    }
+
+    .cell{
+        width:45px;
+        height:45px;
+        background:#b2f5ea;
+        border-radius:10px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        font-weight:bold;
+        font-size:18px;
+        cursor:pointer;
+        user-select:none;
+        transition:0.2s;
+    }
+
+    .cell:hover{
+        transform:scale(1.05);
+    }
+
+    .revealed{
+        background:#edf2f7;
+    }
+
+    .mine{
+        background:#fc8181;
+        color:white;
+    }
+
+    .healthy{
+        background:#c6f6d5;
+    }
+
+    .message{
+        margin-top:15px;
+        text-align:center;
+        font-size:16px;
+        min-height:40px;
+        color:#444;
+    }
+
+    .restart{
+        margin-top:15px;
+        width:100%;
+        padding:12px;
+        border:none;
+        border-radius:12px;
+        background:#38b2ac;
+        color:white;
+        font-size:16px;
+        cursor:pointer;
+    }
+
+    .restart:hover{
+        background:#319795;
+    }
 
 </style>
 </head>
 
 <body>
 
-<div id="topBar">
+<div class="game-container">
 
-    <div id="leftPanel">
+    <h1>🍔 熱量地雷</h1>
 
-        <h1>🩺 健康防衛消消樂 PRO</h1>
-
-        <div class="infoText" id="score">
-            分數：0
+    <div class="top-bar">
+        <div class="danger-count">
+            飲食地雷：<span id="mineCount"></span>
         </div>
 
-        <div class="infoText" id="level">
-            關卡：1
+        <div class="health">
+            健康值：<span id="health">100</span>
         </div>
-
     </div>
 
-    <div id="skillPanel">
+    <div class="board" id="board"></div>
 
-        <div class="skillCard">
-
-            <button class="skillBtn" onclick="quizBomb()">
-                💉 疫苗炸彈
-            </button>
-
-            <div class="condition">
-                使用條件：<br>
-                回答衛教問題並答對即可使用
-            </div>
-
-        </div>
-
-        <div class="skillCard">
-
-            <button
-                class="skillBtn"
-                id="cleanBtn"
-                onclick="cleanVirus()">
-
-                🧼 全面消毒 (0/10)
-
-            </button>
-
-            <div class="condition">
-                使用條件：<br>
-                完成10次消除後可使用
-            </div>
-
-        </div>
-
+    <div class="message" id="message">
+        避開高熱量食物！
     </div>
 
+    <button class="restart" onclick="startGame()">
+        重新開始
+    </button>
+
 </div>
-
-<div id="game"></div>
-
-<div id="tip">
-    消除健康道具，學習防疫知識！
-</div>
-
-<div id="combo"></div>
 
 <script>
 
-const size=8;
+const size = 8;
+const mineTotal = 10;
 
-const icons=[
-    "🦠",
-    "😷",
-    "🧼",
-    "💉",
-    "🥦"
+let board = [];
+let health = 100;
+let gameOver = false;
+
+const unhealthyFoods = [
+    "🍟",
+    "🍔",
+    "🧋",
+    "🍰",
+    "🍩",
+    "🍗"
 ];
 
-const tips=[
-
-"勤洗手可以有效降低感染風險！",
-
-"戴口罩可降低飛沫傳播機率！",
-
-"均衡飲食有助提升免疫力！",
-
-"接種疫苗能降低重症風險！",
-
-"保持規律運動與睡眠有助健康！"
+const healthTips = [
+    "含糖飲料容易造成熱量超標",
+    "炸物脂肪含量偏高",
+    "甜食容易增加糖分攝取",
+    "多喝水比含糖飲料更健康",
+    "均衡飲食有助於維持健康"
 ];
 
-const quizList=[
+function startGame(){
 
-{
-q:"戴口罩主要可以降低什麼？",
-a:"飛沫"
-},
+    board = [];
+    gameOver = false;
+    health = 100;
 
-{
-q:"勤洗手可以降低什麼風險？",
-a:"感染"
-},
+    document.getElementById("health").innerText = health;
+    document.getElementById("mineCount").innerText = mineTotal;
+    document.getElementById("message").innerText = "避開高熱量食物！";
 
-{
-q:"疫苗主要用途是什麼？",
-a:"重症"
-},
+    const boardElement = document.getElementById("board");
+    boardElement.innerHTML = "";
 
-{
-q:"均衡飲食可以提升什麼？",
-a:"免疫力"
-}
+    // 建立空白棋盤
+    for(let row=0; row<size; row++){
 
-];
+        board[row] = [];
 
-const levelTargets=[500,1200,2500];
+        for(let col=0; col<size; col++){
 
-let board=[];
-
-let score=0;
-
-let level=1;
-
-let combo=0;
-
-let eliminateCount=0;
-
-let cleanReady=false;
-
-let selected=null;
-
-const game=document.getElementById("game");
-
-function randomIcon(){
-
-    return icons[
-        Math.floor(Math.random()*icons.length)
-    ];
-}
-
-function init(){
-
-    board=[];
-
-    for(let r=0;r<size;r++){
-
-        let row=[];
-
-        for(let c=0;c<size;c++){
-
-            row.push(randomIcon());
-        }
-
-        board.push(row);
-    }
-
-    render();
-}
-
-function render(){
-
-    game.innerHTML="";
-
-    for(let r=0;r<size;r++){
-
-        for(let c=0;c<size;c++){
-
-            const cell=document.createElement("div");
-
-            cell.className="cell fall";
-
-            cell.innerText=board[r][c];
-
-            cell.dataset.row=r;
-
-            cell.dataset.col=c;
-
-            cell.onclick=clickCell;
-
-            game.appendChild(cell);
+            board[row][col] = {
+                mine:false,
+                revealed:false,
+                count:0
+            };
         }
     }
-}
 
-function clickCell(){
+    // 放置地雷
+    let minesPlaced = 0;
 
-    const r=parseInt(this.dataset.row);
+    while(minesPlaced < mineTotal){
 
-    const c=parseInt(this.dataset.col);
+        let r = Math.floor(Math.random()*size);
+        let c = Math.floor(Math.random()*size);
 
-    if(!selected){
+        if(!board[r][c].mine){
 
-        selected={r,c};
+            board[r][c].mine = true;
+            minesPlaced++;
+        }
+    }
 
-        this.classList.add("selected");
+    // 計算數字
+    for(let row=0; row<size; row++){
 
-    }else{
+        for(let col=0; col<size; col++){
 
-        const dist=
-            Math.abs(selected.r-r)+
-            Math.abs(selected.c-c);
+            if(board[row][col].mine) continue;
 
-        if(dist===1){
+            let count = 0;
 
-            swap(
-                selected.r,
-                selected.c,
-                r,
-                c
-            );
+            for(let dr=-1; dr<=1; dr++){
 
-            if(findMatches().length>0){
+                for(let dc=-1; dc<=1; dc++){
 
-                process();
+                    let nr = row + dr;
+                    let nc = col + dc;
 
-            }else{
-
-                swap(
-                    selected.r,
-                    selected.c,
-                    r,
-                    c
-                );
+                    if(
+                        nr>=0 &&
+                        nr<size &&
+                        nc>=0 &&
+                        nc<size &&
+                        board[nr][nc].mine
+                    ){
+                        count++;
+                    }
+                }
             }
-        }
 
-        selected=null;
-
-        render();
-    }
-}
-
-function swap(r1,c1,r2,c2){
-
-    let temp=board[r1][c1];
-
-    board[r1][c1]=board[r2][c2];
-
-    board[r2][c2]=temp;
-}
-
-function findMatches(){
-
-    let matched=[];
-
-    for(let r=0;r<size;r++){
-
-        for(let c=0;c<size-2;c++){
-
-            let a=board[r][c];
-
-            if(
-                a &&
-                a===board[r][c+1] &&
-                a===board[r][c+2]
-            ){
-
-                matched.push(
-                    [r,c],
-                    [r,c+1],
-                    [r,c+2]
-                );
-            }
+            board[row][col].count = count;
         }
     }
 
-    for(let c=0;c<size;c++){
+    // 建立畫面
+    for(let row=0; row<size; row++){
 
-        for(let r=0;r<size-2;r++){
+        for(let col=0; col<size; col++){
 
-            let a=board[r][c];
+            const cell = document.createElement("div");
 
-            if(
-                a &&
-                a===board[r+1][c] &&
-                a===board[r+2][c]
-            ){
+            cell.classList.add("cell");
 
-                matched.push(
-                    [r,c],
-                    [r+1,c],
-                    [r+2,c]
-                );
-            }
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            cell.addEventListener("click", revealCell);
+
+            boardElement.appendChild(cell);
         }
     }
-
-    return matched;
 }
 
-function process(){
+function revealCell(){
 
-    let matched=findMatches();
+    if(gameOver) return;
 
-    if(matched.length===0){
+    const row = this.dataset.row;
+    const col = this.dataset.col;
 
-        combo=0;
+    const cellData = board[row][col];
+
+    if(cellData.revealed) return;
+
+    cellData.revealed = true;
+
+    this.classList.add("revealed");
+
+    // 踩到地雷
+    if(cellData.mine){
+
+        this.classList.add("mine");
+
+        const randomFood =
+            unhealthyFoods[
+                Math.floor(Math.random()*unhealthyFoods.length)
+            ];
+
+        this.innerText = randomFood;
+
+        health -= 20;
+
+        document.getElementById("health").innerText = health;
+
+        const randomTip =
+            healthTips[
+                Math.floor(Math.random()*healthTips.length)
+            ];
+
+        document.getElementById("message").innerText =
+            "⚠️ " + randomTip;
+
+        if(health <= 0){
+
+            gameOver = true;
+
+            document.getElementById("message").innerText =
+                "💀 健康值歸零！少吃垃圾食物！";
+
+            revealAllMines();
+        }
 
         return;
     }
 
-    combo++;
+    // 安全格
+    this.classList.add("healthy");
 
-    eliminateCount++;
+    if(cellData.count > 0){
 
-    updateCleanButton();
-
-    showCombo(combo);
-
-    matched.forEach(p=>{
-
-        board[p[0]][p[1]]=null;
-    });
-
-    score+=matched.length*10*combo;
-
-    updateUI();
-
-    document.getElementById("tip").innerText=
-        tips[
-            Math.floor(Math.random()*tips.length)
-        ];
-
-    setTimeout(()=>{
-
-        dropTiles();
-
-        render();
-
-        setTimeout(process,300);
-
-    },250);
-}
-
-function dropTiles(){
-
-    for(let c=0;c<size;c++){
-
-        let arr=[];
-
-        for(let r=size-1;r>=0;r--){
-
-            if(board[r][c]!=null){
-
-                arr.push(board[r][c]);
-            }
-        }
-
-        while(arr.length<size){
-
-            arr.push(randomIcon());
-        }
-
-        for(let r=size-1;r>=0;r--){
-
-            board[r][c]=arr[size-1-r];
-        }
-    }
-}
-
-function updateUI(){
-
-    document.getElementById("score").innerText=
-        "分數："+score;
-
-    if(
-        level<4 &&
-        score>=levelTargets[level-1]
-    ){
-
-        level++;
-
-        document.getElementById("level").innerText=
-            "關卡："+level;
-
-        alert("🎉 恭喜進入第 "+level+" 關！");
-    }
-}
-
-function showCombo(num){
-
-    const comboDiv=document.getElementById("combo");
-
-    comboDiv.innerText=num+" COMBO!";
-
-    comboDiv.classList.remove("showCombo");
-
-    void comboDiv.offsetWidth;
-
-    comboDiv.classList.add("showCombo");
-}
-
-function updateCleanButton(){
-
-    const btn=document.getElementById("cleanBtn");
-
-    btn.innerText=
-        `🧼 全面消毒 (${eliminateCount}/10)`;
-
-    if(eliminateCount>=10){
-
-        cleanReady=true;
-
-        btn.style.background="#43a047";
+        this.innerText = cellData.count;
 
     }else{
 
-        cleanReady=false;
+        this.innerText = "🥗";
 
-        btn.style.background="#42a5f5";
+        revealNearby(row, col);
     }
+
+    checkWin();
 }
 
-function quizBomb(){
+function revealNearby(row, col){
 
-    let q=
-        quizList[
-            Math.floor(Math.random()*quizList.length)
-        ];
+    for(let dr=-1; dr<=1; dr++){
 
-    let ans=prompt(q.q);
+        for(let dc=-1; dc<=1; dc++){
 
-    if(ans==null){
-
-        return;
-    }
-
-    if(ans.includes(q.a)){
-
-        alert("✅ 答對了！啟動疫苗炸彈！");
-
-        useBomb();
-
-    }else{
-
-        alert("❌ 答錯了！");
-    }
-}
-
-function useBomb(){
-
-    let r=
-        Math.floor(Math.random()*size);
-
-    let c=
-        Math.floor(Math.random()*size);
-
-    for(let rr=r-1;rr<=r+1;rr++){
-
-        for(let cc=c-1;cc<=c+1;cc++){
+            let nr = parseInt(row) + dr;
+            let nc = parseInt(col) + dc;
 
             if(
-                rr>=0 &&
-                rr<size &&
-                cc>=0 &&
-                cc<size
+                nr>=0 &&
+                nr<size &&
+                nc>=0 &&
+                nc<size
             ){
 
-                board[rr][cc]=null;
+                const index = nr * size + nc;
+
+                const cellElement =
+                    document.getElementsByClassName("cell")[index];
+
+                const cellData = board[nr][nc];
+
+                if(!cellData.revealed && !cellData.mine){
+
+                    cellElement.click();
+                }
+            }
+        }
+    }
+}
+
+function revealAllMines(){
+
+    const cells = document.getElementsByClassName("cell");
+
+    for(let row=0; row<size; row++){
+
+        for(let col=0; col<size; col++){
+
+            if(board[row][col].mine){
+
+                const index = row * size + col;
+
+                cells[index].classList.add("mine");
+
+                cells[index].innerText =
+                    unhealthyFoods[
+                        Math.floor(Math.random()*unhealthyFoods.length)
+                    ];
+            }
+        }
+    }
+}
+
+function checkWin(){
+
+    let safeCells = 0;
+
+    for(let row=0; row<size; row++){
+
+        for(let col=0; col<size; col++){
+
+            if(
+                !board[row][col].mine &&
+                board[row][col].revealed
+            ){
+                safeCells++;
             }
         }
     }
 
-    dropTiles();
+    if(safeCells === (size*size - mineTotal)){
 
-    render();
+        gameOver = true;
 
-    setTimeout(process,200);
+        document.getElementById("message").innerText =
+            "🎉 今日健康飲食達成！";
+    }
 }
 
-function cleanVirus(){
-
-    if(!cleanReady){
-
-        alert("需要完成10次消除才可使用！");
-
-        return;
-    }
-
-    for(let r=0;r<size;r++){
-
-        for(let c=0;c<size;c++){
-
-            if(board[r][c]=="🦠"){
-
-                board[r][c]=null;
-            }
-        }
-    }
-
-    eliminateCount=0;
-
-    updateCleanButton();
-
-    dropTiles();
-
-    render();
-
-    setTimeout(process,200);
-}
-
-init();
-
-updateCleanButton();
+startGame();
 
 </script>
 
